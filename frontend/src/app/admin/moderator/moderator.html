@@ -19,8 +19,8 @@
     <div class="loading">Loading mindmap...</div>
   } @else if (error()) {
     <div class="error">{{ error() }}</div>
-  } @else if (tree()) {
-    <div class="mindmap-container">
+  } @else {
+    <div class="main-content">
       <div class="qr-panel">
         <div class="qr-code">
           <img [src]="'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=' + contributorUrl()" alt="QR Code" />
@@ -35,47 +35,13 @@
         }
       </div>
 
-      <div class="mindmap">
-        <div class="mindmap-tree">
-          <ng-container *ngTemplateOutlet="nodeTemplate; context: { $implicit: tree(), level: 0 }"></ng-container>
-        </div>
+      <div class="mindmap-area">
+        <app-mindmap-graph
+          [statements]="statements()"
+          [focusedStatementId]="focusedStatementId()"
+          (nodeClick)="onNodeClick($event)"
+        />
       </div>
     </div>
   }
 </div>
-
-<ng-template #nodeTemplate let-node let-level="level">
-  <div class="tree-node" [class.has-children]="node.children.length > 0">
-    <div
-      class="node-card"
-      [class.root]="!node.statement.parentId"
-      [class.focused]="node.statement.id === focusedStatementId()"
-      [class.in-path]="isInFocusPath(node.statement.id)"
-      (click)="focusOnStatement(node.statement.id)"
-    >
-      <div class="node-content">
-        <div class="statement">{{ node.statement.content }}</div>
-        @if (node.statement.parentId) {
-          <div class="vote-count">{{ node.statement.voteCount }} votes</div>
-        }
-      </div>
-      @if (node.statement.id === focusedStatementId()) {
-        <div class="focus-indicator">ACTIVE</div>
-      }
-    </div>
-
-    @if (node.children.length > 0) {
-      <div class="children-container">
-        <div class="connector-line"></div>
-        <div class="children">
-          @for (child of node.children; track child.statement.id) {
-            <div class="child-wrapper">
-              <div class="branch-line" [class.in-path]="isInFocusPath(child.statement.id)"></div>
-              <ng-container *ngTemplateOutlet="nodeTemplate; context: { $implicit: child, level: level + 1 }"></ng-container>
-            </div>
-          }
-        </div>
-      </div>
-    }
-  </div>
-</ng-template>

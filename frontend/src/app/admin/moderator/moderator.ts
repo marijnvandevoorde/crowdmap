@@ -1,17 +1,12 @@
 import { Component, OnInit, OnDestroy, signal, computed } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { NgTemplateOutlet } from '@angular/common';
 import { MindmapService, Statement, Mindmap } from '../../core/mindmap';
 import { AuthService } from '../../core/auth';
-
-interface TreeNode {
-  statement: Statement;
-  children: TreeNode[];
-}
+import { MindmapGraphComponent } from './mindmap-graph/mindmap-graph';
 
 @Component({
   selector: 'app-moderator',
-  imports: [NgTemplateOutlet],
+  imports: [MindmapGraphComponent],
   templateUrl: './moderator.html',
   styleUrl: './moderator.scss',
 })
@@ -22,36 +17,9 @@ export class ModeratorComponent implements OnInit, OnDestroy {
   loading = signal(true);
   error = signal<string | null>(null);
   focusedStatementId = signal<number | null>(null);
+  contributorUrl = signal('');
 
   private pollInterval: ReturnType<typeof setInterval> | null = null;
-
-  // Always build tree from root to show full mindmap
-  tree = computed(() => {
-    const stmts = this.statements();
-    if (stmts.length === 0) return null;
-
-    const root = stmts.find(s => s.parentId === null);
-    if (!root) return null;
-
-    return this.buildTree(stmts, root.id);
-  });
-
-  // Get the path from root to focused statement
-  focusPath = computed(() => {
-    const focusId = this.focusedStatementId();
-    if (!focusId) return new Set<number>();
-
-    const stmts = this.statements();
-    const path = new Set<number>();
-    let current: Statement | undefined = stmts.find(s => s.id === focusId);
-
-    while (current) {
-      path.add(current.id);
-      current = current.parentId ? stmts.find(s => s.id === current!.parentId) : undefined;
-    }
-
-    return path;
-  });
 
   rootStatement = computed(() => {
     const stmts = this.statements();
@@ -63,8 +31,6 @@ export class ModeratorComponent implements OnInit, OnDestroy {
     if (!focusId) return this.rootStatement();
     return this.statements().find(s => s.id === focusId) ?? null;
   });
-
-  contributorUrl = signal('');
 
   constructor(
     private route: ActivatedRoute,
@@ -155,19 +121,7 @@ export class ModeratorComponent implements OnInit, OnDestroy {
     }
   }
 
-  isInFocusPath(statementId: number): boolean {
-    return this.focusPath().has(statementId);
-  }
-
-  private buildTree(statements: Statement[], rootId: number): TreeNode | null {
-    const root = statements.find(s => s.id === rootId);
-    if (!root) return null;
-
-    const children = statements.filter(s => s.parentId === rootId);
-
-    return {
-      statement: root,
-      children: children.map(child => this.buildTree(statements, child.id)!).filter(Boolean),
-    };
+  onNodeClick(statementId: number): void {
+    this.focusOnStatement(statementId);
   }
 }
