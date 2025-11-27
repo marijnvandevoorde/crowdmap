@@ -19,6 +19,8 @@ interface TreeNode {
   content: string;
   voteCount: number;
   children?: TreeNode[];
+  wrappedLines?: string[];
+  nodeHeight?: number;
 }
 
 interface D3Node extends d3.HierarchyPointNode<TreeNode> {
@@ -53,7 +55,9 @@ export class MindmapGraphComponent implements AfterViewInit, OnChanges, OnDestro
   private width = 800;
   private height = 600;
   private nodeWidth = 200;
-  private nodeHeight = 60;
+  private nodeMinHeight = 50;
+  private lineHeight = 16;
+  private nodePadding = 20;
   private initialized = false;
 
   ngAfterViewInit(): void {
@@ -164,11 +168,20 @@ export class MindmapGraphComponent implements AfterViewInit, OnChanges, OnDestro
 
     const buildNode = (statement: Statement): TreeNode => {
       const children = this.statements.filter(s => s.parentId === statement.id);
+      const isRoot = statement.parentId === null;
+      const wrappedLines = this.wrapText(statement.content, isRoot ? 24 : 28);
+      const hasVotes = statement.parentId !== null;
+      const textHeight = wrappedLines.length * this.lineHeight;
+      const voteHeight = hasVotes ? 20 : 0;
+      const nodeHeight = Math.max(this.nodeMinHeight, textHeight + voteHeight + this.nodePadding);
+
       return {
         id: statement.id,
         parentId: statement.parentId,
         content: statement.content,
         voteCount: statement.voteCount,
+        wrappedLines,
+        nodeHeight,
         children: children.length > 0 ? children.map(buildNode) : undefined,
       };
     };
@@ -201,9 +214,12 @@ export class MindmapGraphComponent implements AfterViewInit, OnChanges, OnDestro
     // Create hierarchy
     const root = d3.hierarchy(treeData);
 
+    // Find the maximum node height for proper spacing
+    const maxNodeHeight = Math.max(...root.descendants().map(d => d.data.nodeHeight || this.nodeMinHeight));
+
     // Calculate tree layout - horizontal tree
     const treeLayout = d3.tree<TreeNode>()
-      .nodeSize([this.nodeHeight + 30, this.nodeWidth + 80]);
+      .nodeSize([maxNodeHeight + 30, this.nodeWidth + 80]);
 
     const treeRoot = treeLayout(root) as D3Node;
 
@@ -222,10 +238,10 @@ export class MindmapGraphComponent implements AfterViewInit, OnChanges, OnDestro
     });
 
     const treeWidth = maxY - minY + this.nodeWidth;
-    const treeHeight = maxX - minX + this.nodeHeight;
+    const treeHeight = maxX - minX + maxNodeHeight;
 
     const offsetX = (this.width - treeWidth) / 2 - minY + this.nodeWidth / 2;
-    const offsetY = (this.height - treeHeight) / 2 - minX + this.nodeHeight / 2;
+    const offsetY = (this.height - treeHeight) / 2 - minX + maxNodeHeight / 2;
 
     // Custom curved link generator
     const linkGenerator = d3.linkHorizontal<d3.HierarchyPointLink<TreeNode>, d3.HierarchyPointNode<TreeNode>>()
@@ -280,40 +296,57 @@ export class MindmapGraphComponent implements AfterViewInit, OnChanges, OnDestro
     nodeEnter.append('rect')
       .attr('class', 'node-bg')
       .attr('x', -this.nodeWidth / 2)
-      .attr('y', -this.nodeHeight / 2)
+      .attr('y', d => -(d.data.nodeHeight || this.nodeMinHeight) / 2)
       .attr('width', this.nodeWidth)
-      .attr('height', this.nodeHeight)
+      .attr('height', d => d.data.nodeHeight || this.nodeMinHeight)
       .attr('rx', 12)
       .attr('ry', 12)
       .attr('fill', d => d.data.parentId === null ? '#4fc3f7' : '#16213e')
       .attr('stroke', d => d.data.parentId === null ? '#29b6f6' : 'rgba(255,255,255,0.1)')
       .attr('stroke-width', 2);
 
-    // Node text
-    nodeEnter.append('text')
-      .attr('class', 'node-text')
-      .attr('text-anchor', 'middle')
-      .attr('dy', d => d.data.parentId === null ? '0' : '-0.3em')
-      .attr('fill', 'white')
-      .attr('font-size', d => d.data.parentId === null ? '14px' : '12px')
-      .attr('font-weight', d => d.data.parentId === null ? '600' : '400')
-      .text(d => this.truncateText(d.data.content, 25));
+    // Node text - multi-line support
+    const textGroups = nodeEnter.append('g')
+      .attr('class', 'node-text-group');
 
-    // Vote count for non-root nodes
-    nodeEnter.filter(d => d.data.parentId !== null)
-      .append('text')
-      .attr('class', 'vote-text')
-      .attr('text-anchor', 'middle')
-      .attr('dy', '1.2em')
-      .attr('fill', 'rgba(255, 255, 255, 0.5)')
-      .attr('font-size', '10px')
-      .text(d => `▲ ${d.data.voteCount} votes`);
+    textGroups.each((d, i, nodes) => {
+      const group = d3.select(nodes[i]);
+      const lines = d.data.wrappedLines || [d.data.content];
+      const isRoot = d.data.parentId === null;
+      const hasVotes = !isRoot;
+      const fontSize = isRoot ? 14 : 12;
+      const totalTextHeight = lines.length * this.lineHeight;
+      const voteHeight = hasVotes ? 20 : 0;
+      const startY = -totalTextHeight / 2 - voteHeight / 2 + fontSize / 2;
+
+      lines.forEach((line, lineIndex) => {
+        group.append('text')
+          .attr('class', 'node-text')
+          .attr('text-anchor', 'middle')
+          .attr('y', startY + lineIndex * this.lineHeight)
+          .attr('fill', isRoot ? '#1a1a2e' : 'white')
+          .attr('font-size', `${fontSize}px`)
+          .attr('font-weight', isRoot ? '600' : '400')
+          .text(line);
+      });
+
+      // Vote count for non-root nodes
+      if (hasVotes) {
+        group.append('text')
+          .attr('class', 'vote-text')
+          .attr('text-anchor', 'middle')
+          .attr('y', startY + lines.length * this.lineHeight + 4)
+          .attr('fill', 'rgba(255, 255, 255, 0.5)')
+          .attr('font-size', '10px')
+          .text(`▲ ${d.data.voteCount} votes`);
+      }
+    });
 
     // Focus indicator
     nodeEnter.append('text')
       .attr('class', 'focus-indicator')
       .attr('text-anchor', 'middle')
-      .attr('y', -this.nodeHeight / 2 - 8)
+      .attr('y', d => -(d.data.nodeHeight || this.nodeMinHeight) / 2 - 8)
       .attr('fill', '#4fc3f7')
       .attr('font-size', '10px')
       .attr('font-weight', '700')
@@ -331,6 +364,8 @@ export class MindmapGraphComponent implements AfterViewInit, OnChanges, OnDestro
     nodeUpdate.select('.node-bg')
       .transition()
       .duration(300)
+      .attr('y', d => -(d.data.nodeHeight || this.nodeMinHeight) / 2)
+      .attr('height', d => d.data.nodeHeight || this.nodeMinHeight)
       .attr('fill', d => {
         if (d.data.parentId === null) return '#4fc3f7';
         if (d.data.id === this.focusedStatementId) return '#1e3a5f';
@@ -345,11 +380,6 @@ export class MindmapGraphComponent implements AfterViewInit, OnChanges, OnDestro
       })
       .attr('stroke-width', d => d.data.id === this.focusedStatementId ? 3 : 2);
 
-    // Update node text
-    nodeUpdate.select('.node-text')
-      .attr('fill', d => d.data.parentId === null ? '#1a1a2e' : 'white')
-      .text(d => this.truncateText(d.data.content, 25));
-
     // Update vote counts with animation for changes
     nodeUpdate.select('.vote-text')
       .text(d => `▲ ${d.data.voteCount} votes`);
@@ -358,6 +388,7 @@ export class MindmapGraphComponent implements AfterViewInit, OnChanges, OnDestro
     nodeUpdate.select('.focus-indicator')
       .transition()
       .duration(300)
+      .attr('y', d => -(d.data.nodeHeight || this.nodeMinHeight) / 2 - 8)
       .attr('opacity', d => d.data.id === this.focusedStatementId ? 1 : 0);
 
     // Remove old nodes
@@ -383,9 +414,27 @@ export class MindmapGraphComponent implements AfterViewInit, OnChanges, OnDestro
       });
   }
 
-  private truncateText(text: string, maxLength: number): string {
-    if (text.length <= maxLength) return text;
-    return text.substring(0, maxLength - 3) + '...';
+  private wrapText(text: string, maxCharsPerLine: number): string[] {
+    const words = text.split(/\s+/);
+    const lines: string[] = [];
+    let currentLine = '';
+
+    for (const word of words) {
+      if (!currentLine) {
+        currentLine = word;
+      } else if ((currentLine + ' ' + word).length <= maxCharsPerLine) {
+        currentLine += ' ' + word;
+      } else {
+        lines.push(currentLine);
+        currentLine = word;
+      }
+    }
+
+    if (currentLine) {
+      lines.push(currentLine);
+    }
+
+    return lines.length > 0 ? lines : [''];
   }
 
   // Public method to reset zoom
