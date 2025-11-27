@@ -47,6 +47,8 @@ export class MindmapGraphComponent implements AfterViewInit, OnChanges, OnDestro
 
   private svg!: d3.Selection<SVGSVGElement, unknown, null, undefined>;
   private g!: d3.Selection<SVGGElement, unknown, null, undefined>;
+  private linksGroup!: d3.Selection<SVGGElement, unknown, null, undefined>;
+  private nodesGroup!: d3.Selection<SVGGElement, unknown, null, undefined>;
   private zoom!: d3.ZoomBehavior<SVGSVGElement, unknown>;
   private width = 800;
   private height = 600;
@@ -140,6 +142,10 @@ export class MindmapGraphComponent implements AfterViewInit, OnChanges, OnDestro
     // Create main group for zoom/pan
     this.g = this.svg.append('g');
 
+    // Create separate groups for links and nodes (links first so they're behind)
+    this.linksGroup = this.g.append('g').attr('class', 'links-group');
+    this.nodesGroup = this.g.append('g').attr('class', 'nodes-group');
+
     // Setup zoom behavior
     this.zoom = d3.zoom<SVGSVGElement, unknown>()
       .scaleExtent([0.3, 2])
@@ -226,8 +232,8 @@ export class MindmapGraphComponent implements AfterViewInit, OnChanges, OnDestro
       .x(d => d.y + offsetX)
       .y(d => d.x + offsetY);
 
-    // Update links
-    const linkSelection = this.g.selectAll<SVGPathElement, d3.HierarchyPointLink<TreeNode>>('.link')
+    // Update links (in linksGroup so they're always behind nodes)
+    const linkSelection = this.linksGroup.selectAll<SVGPathElement, d3.HierarchyPointLink<TreeNode>>('.link')
       .data(links, d => `${d.source.data.id}-${d.target.data.id}`);
 
     // Enter new links
@@ -237,19 +243,15 @@ export class MindmapGraphComponent implements AfterViewInit, OnChanges, OnDestro
       .attr('fill', 'none')
       .attr('stroke-width', 2)
       .attr('d', linkGenerator)
-      .attr('stroke', d => focusPath.has(d.target.data.id) ? '#4fc3f7' : 'rgba(255, 255, 255, 0.15)')
-      .attr('opacity', 0);
+      .attr('stroke', d => focusPath.has(d.target.data.id) ? '#4fc3f7' : 'rgba(255, 255, 255, 0.3)');
 
-    // Animate enter
-    linkEnter.transition()
-      .duration(500)
-      .attr('opacity', 1);
+    // Merge enter and update, then apply transitions
+    const linkUpdate = linkEnter.merge(linkSelection);
 
-    // Update existing links
-    linkSelection.transition()
+    linkUpdate.transition()
       .duration(500)
       .attr('d', linkGenerator)
-      .attr('stroke', d => focusPath.has(d.target.data.id) ? '#4fc3f7' : 'rgba(255, 255, 255, 0.15)')
+      .attr('stroke', d => focusPath.has(d.target.data.id) ? '#4fc3f7' : 'rgba(255, 255, 255, 0.3)')
       .attr('stroke-width', d => focusPath.has(d.target.data.id) ? 3 : 2);
 
     // Remove old links
@@ -259,8 +261,8 @@ export class MindmapGraphComponent implements AfterViewInit, OnChanges, OnDestro
       .attr('opacity', 0)
       .remove();
 
-    // Update nodes
-    const nodeSelection = this.g.selectAll<SVGGElement, D3Node>('.node')
+    // Update nodes (in nodesGroup so they're always in front of links)
+    const nodeSelection = this.nodesGroup.selectAll<SVGGElement, D3Node>('.node')
       .data(nodes, d => d.data.id.toString());
 
     // Enter new nodes
