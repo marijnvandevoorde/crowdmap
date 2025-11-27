@@ -1,0 +1,33 @@
+#!/usr/bin/env php
+<?php
+
+declare(strict_types=1);
+
+require_once __DIR__ . '/../vendor/autoload.php';
+
+use Crowdmap\Database\SqliteConnection;
+use Crowdmap\Entity\User;
+use Crowdmap\Repository\SqliteUserRepository;
+
+if ($argc < 4) {
+    echo "Usage: create-user <email> <name> <password>\n";
+    exit(1);
+}
+
+$email = $argv[1];
+$name = $argv[2];
+$password = $argv[3];
+
+$connection = new SqliteConnection(__DIR__ . '/../database/crowdmap.sqlite');
+$userRepo = new SqliteUserRepository($connection);
+
+$existing = $userRepo->findByEmail($email);
+if ($existing !== null) {
+    echo "User with email {$email} already exists.\n";
+    exit(1);
+}
+
+$user = User::create($email, $name, $password);
+$user = $userRepo->save($user);
+
+echo "Created user: {$user->name} ({$user->email}) with ID {$user->id}\n";

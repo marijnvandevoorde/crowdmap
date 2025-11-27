@@ -1,0 +1,81 @@
+<div class="moderator">
+  <header class="header">
+    <button class="btn-back" (click)="goBack()">
+      @if (focusedStatementId() && focusedStatement()?.parentId) {
+        &larr; Back
+      } @else {
+        &larr; Dashboard
+      }
+    </button>
+    <h1>Moderator View</h1>
+    <div class="header-actions">
+      @if (focusedStatementId()) {
+        <button class="btn-reset" (click)="resetFocus()">Reset Focus</button>
+      }
+    </div>
+  </header>
+
+  @if (loading()) {
+    <div class="loading">Loading mindmap...</div>
+  } @else if (error()) {
+    <div class="error">{{ error() }}</div>
+  } @else if (tree()) {
+    <div class="mindmap-container">
+      <div class="qr-panel">
+        <div class="qr-code">
+          <img [src]="'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=' + contributorUrl()" alt="QR Code" />
+        </div>
+        <p>Scan to contribute</p>
+        <a [href]="contributorUrl()" target="_blank" class="share-link">{{ contributorUrl() }}</a>
+        @if (focusedStatement(); as focused) {
+          <div class="current-focus">
+            <span class="label">Currently collecting reactions on:</span>
+            <span class="focus-text">{{ focused.content }}</span>
+          </div>
+        }
+      </div>
+
+      <div class="mindmap">
+        <div class="mindmap-tree">
+          <ng-container *ngTemplateOutlet="nodeTemplate; context: { $implicit: tree(), level: 0 }"></ng-container>
+        </div>
+      </div>
+    </div>
+  }
+</div>
+
+<ng-template #nodeTemplate let-node let-level="level">
+  <div class="tree-node" [class.has-children]="node.children.length > 0">
+    <div
+      class="node-card"
+      [class.root]="!node.statement.parentId"
+      [class.focused]="node.statement.id === focusedStatementId()"
+      [class.in-path]="isInFocusPath(node.statement.id)"
+      (click)="focusOnStatement(node.statement.id)"
+    >
+      <div class="node-content">
+        <div class="statement">{{ node.statement.content }}</div>
+        @if (node.statement.parentId) {
+          <div class="vote-count">{{ node.statement.voteCount }} votes</div>
+        }
+      </div>
+      @if (node.statement.id === focusedStatementId()) {
+        <div class="focus-indicator">ACTIVE</div>
+      }
+    </div>
+
+    @if (node.children.length > 0) {
+      <div class="children-container">
+        <div class="connector-line"></div>
+        <div class="children">
+          @for (child of node.children; track child.statement.id) {
+            <div class="child-wrapper">
+              <div class="branch-line" [class.in-path]="isInFocusPath(child.statement.id)"></div>
+              <ng-container *ngTemplateOutlet="nodeTemplate; context: { $implicit: child, level: level + 1 }"></ng-container>
+            </div>
+          }
+        </div>
+      </div>
+    }
+  </div>
+</ng-template>

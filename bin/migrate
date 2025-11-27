@@ -1,0 +1,44 @@
+#!/usr/bin/env php
+<?php
+
+declare(strict_types=1);
+
+require_once __DIR__ . '/../vendor/autoload.php';
+
+use Crowdmap\Database\Migrator;
+use Crowdmap\Database\SqliteConnection;
+
+$databasePath = __DIR__ . '/../database/crowdmap.sqlite';
+$migrationsPath = __DIR__ . '/../database/migrations';
+
+$connection = new SqliteConnection($databasePath);
+$migrator = new Migrator($connection, $migrationsPath);
+
+$command = $argv[1] ?? 'up';
+
+switch ($command) {
+    case 'up':
+        $applied = $migrator->migrate();
+        if (empty($applied)) {
+            echo "Nothing to migrate.\n";
+        } else {
+            echo "Applied migrations:\n";
+            foreach ($applied as $migration) {
+                echo "  - {$migration}\n";
+            }
+        }
+        break;
+
+    case 'down':
+        $rolledBack = $migrator->rollback();
+        if ($rolledBack === null) {
+            echo "Nothing to rollback.\n";
+        } else {
+            echo "Rolled back: {$rolledBack}\n";
+        }
+        break;
+
+    default:
+        echo "Usage: migrate [up|down]\n";
+        exit(1);
+}

@@ -1,0 +1,39 @@
+<div class="contribute">
+  @if (loading()) {
+    <div class="loading">Loading...</div>
+  } @else if (error()) {
+    <div class="error">{{ error() }}</div>
+  } @else {
+    <header class="statement-header">
+      <h1>{{ focusedStatement()?.content }}</h1>
+    </header>
+
+    <main class="reactions-list">
+      @if (reactions().length === 0) {
+        <p class="empty">No reactions yet. Be the first to share your thoughts!</p>
+      } @else {
+        @for (reaction of reactions(); track reaction.id) {
+          <div class="reaction" [class.own]="isOwnStatement(reaction)" (click)="toggleVote(reaction)">
+            <span class="content">{{ reaction.content }}</span>
+            <span class="votes">{{ reaction.voteCount }}</span>
+          </div>
+        }
+      }
+    </main>
+
+    <footer class="input-area">
+      <form (ngSubmit)="submitReaction()">
+        <input
+          type="text"
+          [(ngModel)]="newReaction"
+          name="reaction"
+          placeholder="Share your reaction..."
+          autocomplete="off"
+        />
+        <button type="submit" [disabled]="submitting() || !newReaction.trim()">
+          @if (submitting()) { ... } @else { Send }
+        </button>
+      </form>
+    </footer>
+  }
+</div>

@@ -1,0 +1,58 @@
+<div class="dashboard">
+  <header class="header">
+    <h1>Crowdmap</h1>
+    <div class="user-info">
+      <span>{{ userName }}</span>
+      <button class="btn-text" (click)="logout()">Logout</button>
+    </div>
+  </header>
+
+  <main class="content">
+    <div class="toolbar">
+      <h2>Your Mindmaps</h2>
+      <button class="btn-primary" (click)="openCreateModal()">+ New Mindmap</button>
+    </div>
+
+    @if (loading()) {
+      <div class="loading">Loading...</div>
+    } @else if (mindmaps().length === 0) {
+      <div class="empty">
+        <p>You don't have any mindmaps yet.</p>
+        <button class="btn-primary" (click)="openCreateModal()">Create your first mindmap</button>
+      </div>
+    } @else {
+      <div class="mindmap-list">
+        @for (mindmap of mindmaps(); track mindmap.id) {
+          <div class="mindmap-card" (click)="openMindmap(mindmap.uuid)">
+            <div class="question">{{ mindmap.question }}</div>
+            <div class="meta">{{ mindmap.createdAt | date:'medium' }}</div>
+          </div>
+        }
+      </div>
+    }
+  </main>
+</div>
+
+@if (showCreateModal()) {
+  <div class="modal-overlay" (click)="closeCreateModal()">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <h3>Create New Mindmap</h3>
+      <p class="modal-hint">Enter a question or statement to start your mindmap</p>
+      <form (ngSubmit)="createMindmap()">
+        <textarea
+          [(ngModel)]="newQuestion"
+          name="question"
+          placeholder="e.g., What features should we add to our product?"
+          rows="3"
+          autofocus
+        ></textarea>
+        <div class="modal-actions">
+          <button type="button" class="btn-secondary" (click)="closeCreateModal()">Cancel</button>
+          <button type="submit" class="btn-primary" [disabled]="creating() || !newQuestion.trim()">
+            @if (creating()) { Creating... } @else { Create }
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+}
