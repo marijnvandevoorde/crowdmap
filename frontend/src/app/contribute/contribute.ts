@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, signal, computed } from '@angular/core';
+import { Component, OnInit, OnDestroy, AfterViewInit, signal, computed, ViewChild, ElementRef } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { MindmapService, Statement, Mindmap } from '../core/mindmap';
@@ -9,7 +9,8 @@ import { MindmapService, Statement, Mindmap } from '../core/mindmap';
   templateUrl: './contribute.html',
   styleUrl: './contribute.scss',
 })
-export class ContributeComponent implements OnInit, OnDestroy {
+export class ContributeComponent implements OnInit, OnDestroy, AfterViewInit {
+  @ViewChild('reactionInput') reactionInput!: ElementRef<HTMLInputElement>;
   uuid = '';
   mindmap = signal<Mindmap | null>(null);
   statements = signal<Statement[]>([]);
@@ -57,8 +58,16 @@ export class ContributeComponent implements OnInit, OnDestroy {
     this.startPolling();
   }
 
+  ngAfterViewInit(): void {
+    this.focusInput();
+  }
+
   ngOnDestroy(): void {
     this.stopPolling();
+  }
+
+  focusInput(): void {
+    setTimeout(() => this.reactionInput?.nativeElement?.focus(), 0);
   }
 
   loadMindmap(): void {
@@ -105,6 +114,7 @@ export class ContributeComponent implements OnInit, OnDestroy {
         this.statements.update(stmts => [...stmts, response.statement]);
         this.newReaction = '';
         this.submitting.set(false);
+        this.focusInput();
       },
       error: () => {
         this.submitting.set(false);
@@ -123,6 +133,7 @@ export class ContributeComponent implements OnInit, OnDestroy {
             s.id === statement.id ? { ...s, voteCount: response.voteCount } : s
           )
         );
+        this.focusInput();
       },
     });
   }

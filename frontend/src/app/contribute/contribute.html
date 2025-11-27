@@ -24,6 +24,7 @@
     <footer class="input-area">
       <form (ngSubmit)="submitReaction()">
         <input
+          #reactionInput
           type="text"
           [(ngModel)]="newReaction"
           name="reaction"
