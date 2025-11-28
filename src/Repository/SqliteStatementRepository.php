@@ -91,6 +91,86 @@ class SqliteStatementRepository implements StatementRepository
         }, $rows);
     }
 
+    public function merge(array $statementIds): Statement
+    {
+        if (count($statementIds) < 2) {
+            throw new \InvalidArgumentException('At least 2 statements required for merge');
+        }
+
+        // Get all statements and verify they have the same parent
+        $statements = [];
+        $parentId = null;
+        foreach ($statementIds as $id) {
+            $statement = $this->findById($id);
+            if ($statement === null) {
+                throw new \InvalidArgumentException("Statement $id not found");
+            }
+            if ($parentId === null) {
+                $parentId = $statement->parentId;
+            } elseif ($statement->parentId !== $parentId) {
+                throw new \InvalidArgumentException('All statements must have the same parent');
+            }
+            $statements[] = $statement;
+        }
+
+        // First statement becomes the target
+        $targetId = $statementIds[0];
+        $otherIds = array_slice($statementIds, 1);
+
+        // Merge content from all statements as bullet points
+        $mergedContent = implode("\n", array_map(fn($s) => '• ' . $s->content, $statements));
+        $this->updateContent($targetId, $mergedContent);
+
+        // Transfer children from other statements to target
+        foreach ($otherIds as $otherId) {
+            $this->connection->execute(
+                'UPDATE statements SET parent_id = :target_id WHERE parent_id = :other_id',
+                ['target_id' => $targetId, 'other_id' => $otherId]
+            );
+        }
+
+        // Transfer votes from other statements to target (avoiding duplicates)
+        foreach ($otherIds as $otherId) {
+            // Get votes from other statement that don't already exist for target
+            $this->connection->execute(
+                'INSERT OR IGNORE INTO votes (statement_id, session_id, created_at)
+                 SELECT :target_id, session_id, created_at FROM votes WHERE statement_id = :other_id',
+                ['target_id' => $targetId, 'other_id' => $otherId]
+            );
+        }
+
+        // Delete other statements (votes will cascade or be handled)
+        foreach ($otherIds as $otherId) {
+            $this->delete($otherId);
+        }
+
+        return $this->findById($targetId);
+    }
+
+    public function delete(int $id): void
+    {
+        // Delete votes first
+        $this->connection->execute('DELETE FROM votes WHERE statement_id = :id', ['id' => $id]);
+        // Delete statement
+        $this->connection->execute('DELETE FROM statements WHERE id = :id', ['id' => $id]);
+    }
+
+    public function updateContent(int $id, string $content): void
+    {
+        $this->connection->execute(
+            'UPDATE statements SET content = :content WHERE id = :id',
+            ['id' => $id, 'content' => $content]
+        );
+    }
+
+    public function updateParentId(int $id, int $newParentId): void
+    {
+        $this->connection->execute(
+            'UPDATE statements SET parent_id = :parent_id WHERE id = :id',
+            ['id' => $id, 'parent_id' => $newParentId]
+        );
+    }
+
     private function hydrate(array $row): Statement
     {
         return new Statement(

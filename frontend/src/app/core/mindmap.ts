@@ -92,4 +92,12 @@ export class MindmapService {
       { withCredentials: true }
     );
   }
+
+  mergeStatements(uuid: string, statementIds: number[]): Observable<{ statements: Statement[] }> {
+    return this.http.post<{ statements: Statement[] }>(
+      `${this.apiUrl}/mindmaps/${uuid}/merge`,
+      { statementIds },
+      { withCredentials: true }
+    );
+  }
 }

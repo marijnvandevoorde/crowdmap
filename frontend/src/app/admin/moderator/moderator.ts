@@ -18,6 +18,7 @@ export class ModeratorComponent implements OnInit, OnDestroy {
   error = signal<string | null>(null);
   focusedStatementId = signal<number | null>(null);
   contributorUrl = signal('');
+  selectedNodeIds = signal<Set<number>>(new Set());
 
   private pollInterval: ReturnType<typeof setInterval> | null = null;
 
@@ -30,6 +31,22 @@ export class ModeratorComponent implements OnInit, OnDestroy {
     const focusId = this.focusedStatementId();
     if (!focusId) return this.rootStatement();
     return this.statements().find(s => s.id === focusId) ?? null;
+  });
+
+  canMerge = computed(() => {
+    const selected = this.selectedNodeIds();
+    if (selected.size < 2) return false;
+
+    // Check all selected nodes are siblings (same parent)
+    const stmts = this.statements();
+    const selectedStatements = stmts.filter(s => selected.has(s.id));
+    const parentIds = new Set(selectedStatements.map(s => s.parentId));
+    return parentIds.size === 1 && !parentIds.has(null); // All same parent, not root
+  });
+
+  selectedStatements = computed(() => {
+    const selected = this.selectedNodeIds();
+    return this.statements().filter(s => selected.has(s.id));
   });
 
   constructor(
@@ -122,6 +139,52 @@ export class ModeratorComponent implements OnInit, OnDestroy {
   }
 
   onNodeClick(statementId: number): void {
+    this.clearSelection();
     this.focusOnStatement(statementId);
+  }
+
+  onNodeSelect(statementId: number): void {
+    const current = this.selectedNodeIds();
+    const newSet = new Set(current);
+
+    if (newSet.has(statementId)) {
+      newSet.delete(statementId);
+    } else {
+      // Only allow selecting siblings
+      const clickedStatement = this.statements().find(s => s.id === statementId);
+      if (clickedStatement && clickedStatement.parentId !== null) {
+        // If we have existing selections, check they share the same parent
+        if (newSet.size > 0) {
+          const firstSelectedId = newSet.values().next().value;
+          const firstSelected = this.statements().find(s => s.id === firstSelectedId);
+          if (firstSelected?.parentId !== clickedStatement.parentId) {
+            // Different parent, start new selection
+            newSet.clear();
+          }
+        }
+        newSet.add(statementId);
+      }
+    }
+
+    this.selectedNodeIds.set(newSet);
+  }
+
+  clearSelection(): void {
+    this.selectedNodeIds.set(new Set());
+  }
+
+  mergeSelected(): void {
+    const selected = Array.from(this.selectedNodeIds());
+    if (selected.length < 2) return;
+
+    this.mindmapService.mergeStatements(this.uuid, selected).subscribe({
+      next: (response) => {
+        this.statements.set(response.statements);
+        this.clearSelection();
+      },
+      error: (err) => {
+        console.error('Failed to merge statements', err);
+      },
+    });
   }
 }

@@ -10,6 +10,7 @@ use Crowdmap\Http\Action\ListMindmapsAction;
 use Crowdmap\Http\Action\LoginAction;
 use Crowdmap\Http\Action\LogoutAction;
 use Crowdmap\Http\Action\MeAction;
+use Crowdmap\Http\Action\MergeStatementsAction;
 use Crowdmap\Http\Action\SetFocusedStatementAction;
 use Crowdmap\Http\Action\ToggleVoteAction;
 use Slim\App;
@@ -25,6 +26,7 @@ return function (App $app) {
     $app->post('/api/mindmaps', CreateMindmapAction::class);
     $app->get('/api/mindmaps/{uuid}/moderate', GetMindmapModeratorAction::class);
     $app->post('/api/mindmaps/{uuid}/focus', SetFocusedStatementAction::class);
+    $app->post('/api/mindmaps/{uuid}/merge', MergeStatementsAction::class);
 
     // Mindmaps (public - contributor)
     $app->get('/api/mindmaps/{uuid}', GetMindmapAction::class);

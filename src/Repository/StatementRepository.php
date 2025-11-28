@@ -22,4 +22,17 @@ interface StatementRepository
 
     /** @return array{statement: Statement, vote_count: int}[] */
     public function findByMindmapIdWithVoteCounts(int $mindmapId): array;
+
+    /**
+     * Merge multiple statements into one. The first statement becomes the merged statement,
+     * others are deleted, and their children/votes are transferred.
+     * @param int[] $statementIds
+     */
+    public function merge(array $statementIds): Statement;
+
+    public function delete(int $id): void;
+
+    public function updateContent(int $id, string $content): void;
+
+    public function updateParentId(int $id, int $newParentId): void;
 }

@@ -45,7 +45,9 @@ export class MindmapGraphComponent implements AfterViewInit, OnChanges, OnDestro
 
   @Input() statements: Statement[] = [];
   @Input() focusedStatementId: number | null = null;
+  @Input() selectedNodeIds: Set<number> = new Set();
   @Output() nodeClick = new EventEmitter<number>();
+  @Output() nodeSelect = new EventEmitter<number>();
 
   private svg!: d3.Selection<SVGSVGElement, unknown, null, undefined>;
   private g!: d3.Selection<SVGGElement, unknown, null, undefined>;
@@ -289,7 +291,11 @@ export class MindmapGraphComponent implements AfterViewInit, OnChanges, OnDestro
       .style('cursor', 'pointer')
       .on('click', (event, d) => {
         event.stopPropagation();
-        this.nodeClick.emit(d.data.id);
+        if (event.metaKey || event.ctrlKey) {
+          this.nodeSelect.emit(d.data.id);
+        } else {
+          this.nodeClick.emit(d.data.id);
+        }
       });
 
     // Node background rect
@@ -368,21 +374,57 @@ export class MindmapGraphComponent implements AfterViewInit, OnChanges, OnDestro
       .attr('height', d => d.data.nodeHeight || this.nodeMinHeight)
       .attr('fill', d => {
         if (d.data.parentId === null) return '#4fc3f7';
+        if (this.selectedNodeIds.has(d.data.id)) return '#2e5a3f';
         if (d.data.id === this.focusedStatementId) return '#1e3a5f';
         if (focusPath.has(d.data.id)) return '#1e2a4a';
         return '#16213e';
       })
       .attr('stroke', d => {
         if (d.data.parentId === null) return '#29b6f6';
+        if (this.selectedNodeIds.has(d.data.id)) return '#4caf50';
         if (d.data.id === this.focusedStatementId) return '#4fc3f7';
         if (focusPath.has(d.data.id)) return 'rgba(79, 195, 247, 0.5)';
         return 'rgba(255,255,255,0.1)';
       })
-      .attr('stroke-width', d => d.data.id === this.focusedStatementId ? 3 : 2);
+      .attr('stroke-width', d => this.selectedNodeIds.has(d.data.id) || d.data.id === this.focusedStatementId ? 3 : 2);
 
-    // Update vote counts with animation for changes
-    nodeUpdate.select('.vote-text')
-      .text(d => `▲ ${d.data.voteCount} votes`);
+    // Update text groups - rebuild if content changed
+    nodeUpdate.each((d, i, nodes) => {
+      const node = d3.select(nodes[i]);
+      const textGroup = node.select('.node-text-group');
+
+      // Clear and rebuild text group
+      textGroup.selectAll('*').remove();
+
+      const lines = d.data.wrappedLines || [d.data.content];
+      const isRoot = d.data.parentId === null;
+      const hasVotes = !isRoot;
+      const fontSize = isRoot ? 14 : 12;
+      const totalTextHeight = lines.length * this.lineHeight;
+      const voteHeight = hasVotes ? 20 : 0;
+      const startY = -totalTextHeight / 2 - voteHeight / 2 + fontSize / 2;
+
+      lines.forEach((line, lineIndex) => {
+        textGroup.append('text')
+          .attr('class', 'node-text')
+          .attr('text-anchor', 'middle')
+          .attr('y', startY + lineIndex * this.lineHeight)
+          .attr('fill', isRoot ? '#1a1a2e' : 'white')
+          .attr('font-size', `${fontSize}px`)
+          .attr('font-weight', isRoot ? '600' : '400')
+          .text(line);
+      });
+
+      if (hasVotes) {
+        textGroup.append('text')
+          .attr('class', 'vote-text')
+          .attr('text-anchor', 'middle')
+          .attr('y', startY + lines.length * this.lineHeight + 4)
+          .attr('fill', 'rgba(255, 255, 255, 0.5)')
+          .attr('font-size', '10px')
+          .text(`▲ ${d.data.voteCount} votes`);
+      }
+    });
 
     // Update focus indicator
     nodeUpdate.select('.focus-indicator')

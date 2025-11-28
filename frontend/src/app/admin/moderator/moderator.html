@@ -39,8 +39,21 @@
         <app-mindmap-graph
           [statements]="statements()"
           [focusedStatementId]="focusedStatementId()"
+          [selectedNodeIds]="selectedNodeIds()"
           (nodeClick)="onNodeClick($event)"
+          (nodeSelect)="onNodeSelect($event)"
         />
+        @if (canMerge()) {
+          <div class="merge-toolbar">
+            <span class="merge-info">{{ selectedNodeIds().size }} statements selected</span>
+            <button class="btn-merge" (click)="mergeSelected()">
+              Merge
+            </button>
+            <button class="btn-cancel" (click)="clearSelection()">
+              Cancel
+            </button>
+          </div>
+        }
       </div>
     </div>
   }
