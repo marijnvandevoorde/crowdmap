@@ -8,6 +8,6 @@ RUN npm install
 COPY . .
 RUN npm run build
 
-FROM nginx:alpine
+FROM nginx:1.29.3-alpine3.22-slim
 
 COPY --from=build /app/dist/frontend/browser /app/frontend
