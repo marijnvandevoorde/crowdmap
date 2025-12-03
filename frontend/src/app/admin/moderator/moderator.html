@@ -41,17 +41,21 @@
           [focusedStatementId]="focusedStatementId()"
           [selectedNodeIds]="selectedNodeIds()"
           (nodeClick)="onNodeClick($event)"
-          (nodeSelect)="onNodeSelect($event)"
+          (nodeDblClick)="onNodeDblClick($event)"
+          (nodeCtrlClick)="onNodeCtrlClick($event)"
         />
-        @if (canDelete()) {
+        @if (hasSelection()) {
           <div class="selection-toolbar">
             <span class="selection-info">{{ selectedNodeIds().size }} statement{{ selectedNodeIds().size > 1 ? 's' : '' }} selected</span>
+            <button class="btn-edit" [disabled]="!canEdit()" (click)="editSelected()">
+              Edit
+            </button>
             @if (canMerge()) {
               <button class="btn-merge" (click)="mergeSelected()">
                 Merge
               </button>
             }
-            <button class="btn-delete" (click)="deleteSelected()">
+            <button class="btn-delete" [disabled]="!canDelete()" (click)="deleteSelected()">
               Delete
             </button>
             <button class="btn-cancel" (click)="clearSelection()">
@@ -59,6 +63,26 @@
             </button>
           </div>
         }
+      </div>
+    </div>
+  }
+
+  @if (editingNode(); as editing) {
+    <div class="edit-overlay" (click)="cancelEdit()">
+      <div class="edit-modal" (click)="$event.stopPropagation()">
+        <h3>Edit Statement</h3>
+        <textarea
+          class="edit-textarea"
+          [value]="editContent()"
+          (input)="editContent.set($any($event.target).value)"
+          (keydown)="onEditKeydown($event)"
+          #editTextarea
+        ></textarea>
+        <div class="edit-actions">
+          <button class="btn-save" (click)="saveEdit()">Save</button>
+          <button class="btn-cancel-edit" (click)="cancelEdit()">Cancel</button>
+          <span class="edit-hint">Cmd+Enter to save, Esc to cancel</span>
+        </div>
       </div>
     </div>
   }

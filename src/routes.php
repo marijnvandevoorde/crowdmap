@@ -14,6 +14,7 @@ use Crowdmap\Http\Action\MeAction;
 use Crowdmap\Http\Action\MergeStatementsAction;
 use Crowdmap\Http\Action\SetFocusedStatementAction;
 use Crowdmap\Http\Action\ToggleVoteAction;
+use Crowdmap\Http\Action\UpdateStatementAction;
 use Slim\App;
 
 return function (App $app) {
@@ -29,6 +30,7 @@ return function (App $app) {
     $app->post('/api/mindmaps/{uuid}/focus', SetFocusedStatementAction::class);
     $app->post('/api/mindmaps/{uuid}/merge', MergeStatementsAction::class);
     $app->post('/api/mindmaps/{uuid}/delete', DeleteStatementsAction::class);
+    $app->put('/api/mindmaps/{uuid}/statements/{statementId}', UpdateStatementAction::class);
 
     // Mindmaps (public - contributor)
     $app->get('/api/mindmaps/{uuid}', GetMindmapAction::class);

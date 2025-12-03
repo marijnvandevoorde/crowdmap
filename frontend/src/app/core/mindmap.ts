@@ -108,4 +108,12 @@ export class MindmapService {
       { withCredentials: true }
     );
   }
+
+  updateStatement(uuid: string, statementId: number, content: string): Observable<{ statements: Statement[] }> {
+    return this.http.put<{ statements: Statement[] }>(
+      `${this.apiUrl}/mindmaps/${uuid}/statements/${statementId}`,
+      { content },
+      { withCredentials: true }
+    );
+  }
 }

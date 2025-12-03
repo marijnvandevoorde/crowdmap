@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, signal, computed } from '@angular/core';
+import { Component, OnInit, OnDestroy, signal, computed, effect, ViewChild, ElementRef } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MindmapService, Statement, Mindmap } from '../../core/mindmap';
 import { AuthService } from '../../core/auth';
@@ -19,6 +19,11 @@ export class ModeratorComponent implements OnInit, OnDestroy {
   focusedStatementId = signal<number | null>(null);
   contributorUrl = signal('');
   selectedNodeIds = signal<Set<number>>(new Set());
+
+  // Edit mode state
+  editingNode = signal<{ id: number; content: string } | null>(null);
+  editContent = signal('');
+  @ViewChild('editTextarea') editTextarea?: ElementRef<HTMLTextAreaElement>;
 
   private pollInterval: ReturnType<typeof setInterval> | null = null;
 
@@ -52,6 +57,15 @@ export class ModeratorComponent implements OnInit, OnDestroy {
     const stmts = this.statements();
     const selectedStatements = stmts.filter(s => selected.has(s.id));
     return selectedStatements.every(s => s.parentId !== null);
+  });
+
+  canEdit = computed(() => {
+    const selected = this.selectedNodeIds();
+    return selected.size === 1;
+  });
+
+  hasSelection = computed(() => {
+    return this.selectedNodeIds().size > 0;
   });
 
   selectedStatements = computed(() => {
@@ -148,32 +162,26 @@ export class ModeratorComponent implements OnInit, OnDestroy {
     }
   }
 
+  // Single click - select this node (replaces current selection)
   onNodeClick(statementId: number): void {
+    this.selectedNodeIds.set(new Set([statementId]));
+  }
+
+  // Double click - set focus on node
+  onNodeDblClick(statementId: number): void {
     this.clearSelection();
     this.focusOnStatement(statementId);
   }
 
-  onNodeSelect(statementId: number): void {
+  // Cmd/Ctrl click - add to multi-selection
+  onNodeCtrlClick(statementId: number): void {
     const current = this.selectedNodeIds();
     const newSet = new Set(current);
 
     if (newSet.has(statementId)) {
       newSet.delete(statementId);
     } else {
-      // Only allow selecting siblings
-      const clickedStatement = this.statements().find(s => s.id === statementId);
-      if (clickedStatement && clickedStatement.parentId !== null) {
-        // If we have existing selections, check they share the same parent
-        if (newSet.size > 0) {
-          const firstSelectedId = newSet.values().next().value;
-          const firstSelected = this.statements().find(s => s.id === firstSelectedId);
-          if (firstSelected?.parentId !== clickedStatement.parentId) {
-            // Different parent, start new selection
-            newSet.clear();
-          }
-        }
-        newSet.add(statementId);
-      }
+      newSet.add(statementId);
     }
 
     this.selectedNodeIds.set(newSet);
@@ -216,5 +224,56 @@ export class ModeratorComponent implements OnInit, OnDestroy {
         console.error('Failed to delete statements', err);
       },
     });
+  }
+
+  editSelected(): void {
+    const selected = this.selectedNodeIds();
+    if (selected.size !== 1) return;
+
+    const statementId = selected.values().next().value;
+    const statement = this.statements().find(s => s.id === statementId);
+    if (!statement) return;
+
+    this.editingNode.set({
+      id: statement.id,
+      content: statement.content,
+    });
+    this.editContent.set(statement.content);
+
+    // Focus textarea after Angular updates the view
+    setTimeout(() => {
+      this.editTextarea?.nativeElement.focus();
+      this.editTextarea?.nativeElement.select();
+    }, 0);
+  }
+
+  cancelEdit(): void {
+    this.editingNode.set(null);
+    this.editContent.set('');
+  }
+
+  saveEdit(): void {
+    const editing = this.editingNode();
+    const content = this.editContent().trim();
+
+    if (!editing || !content) return;
+
+    this.mindmapService.updateStatement(this.uuid, editing.id, content).subscribe({
+      next: (response) => {
+        this.statements.set(response.statements);
+        this.cancelEdit();
+      },
+      error: (err) => {
+        console.error('Failed to update statement', err);
+      },
+    });
+  }
+
+  onEditKeydown(event: KeyboardEvent): void {
+    if (event.key === 'Escape') {
+      this.cancelEdit();
+    } else if (event.key === 'Enter' && (event.metaKey || event.ctrlKey)) {
+      this.saveEdit();
+    }
   }
 }

@@ -46,14 +46,16 @@ export class MindmapGraphComponent implements AfterViewInit, OnChanges, OnDestro
   @Input() statements: Statement[] = [];
   @Input() focusedStatementId: number | null = null;
   @Input() selectedNodeIds: Set<number> = new Set();
-  @Output() nodeClick = new EventEmitter<number>();
-  @Output() nodeSelect = new EventEmitter<number>();
+  @Output() nodeClick = new EventEmitter<number>(); // Single click - select node
+  @Output() nodeDblClick = new EventEmitter<number>(); // Double click - set focus
+  @Output() nodeCtrlClick = new EventEmitter<number>(); // Cmd/Ctrl click - multi-select
 
   private svg!: d3.Selection<SVGSVGElement, unknown, null, undefined>;
   private g!: d3.Selection<SVGGElement, unknown, null, undefined>;
   private linksGroup!: d3.Selection<SVGGElement, unknown, null, undefined>;
   private nodesGroup!: d3.Selection<SVGGElement, unknown, null, undefined>;
   private zoom!: d3.ZoomBehavior<SVGSVGElement, unknown>;
+  private currentTransform: d3.ZoomTransform = d3.zoomIdentity;
   private width = 800;
   private height = 600;
   private nodeWidth = 200;
@@ -156,6 +158,7 @@ export class MindmapGraphComponent implements AfterViewInit, OnChanges, OnDestro
     this.zoom = d3.zoom<SVGSVGElement, unknown>()
       .scaleExtent([0.3, 2])
       .on('zoom', (event) => {
+        this.currentTransform = event.transform;
         this.g.attr('transform', event.transform);
       });
 
@@ -292,12 +295,17 @@ export class MindmapGraphComponent implements AfterViewInit, OnChanges, OnDestro
       .on('click', (event, d) => {
         event.stopPropagation();
         if (event.metaKey || event.ctrlKey) {
-          this.nodeSelect.emit(d.data.id);
+          // Cmd/Ctrl click - add to multi-selection
+          this.nodeCtrlClick.emit(d.data.id);
+        } else {
+          // Single click - select this node (replaces selection)
+          this.nodeClick.emit(d.data.id);
         }
       })
       .on('dblclick', (event, d) => {
         event.stopPropagation();
-        this.nodeClick.emit(d.data.id);
+        // Double click - set focus on node
+        this.nodeDblClick.emit(d.data.id);
       });
 
     // Node background rect
