@@ -155,6 +155,39 @@ class SqliteStatementRepository implements StatementRepository
         $this->connection->execute('DELETE FROM statements WHERE id = :id', ['id' => $id]);
     }
 
+    public function deleteWithDescendants(array $statementIds): void
+    {
+        // Collect all IDs to delete (including descendants)
+        $allIdsToDelete = [];
+
+        foreach ($statementIds as $id) {
+            $this->collectDescendantIds((int) $id, $allIdsToDelete);
+        }
+
+        // Delete in reverse order (children first) to avoid foreign key issues
+        $allIdsToDelete = array_reverse($allIdsToDelete);
+
+        foreach ($allIdsToDelete as $id) {
+            $this->delete($id);
+        }
+    }
+
+    private function collectDescendantIds(int $id, array &$collected): void
+    {
+        if (in_array($id, $collected, true)) {
+            return;
+        }
+
+        // First collect all children recursively
+        $children = $this->findByParentId($id);
+        foreach ($children as $child) {
+            $this->collectDescendantIds($child->id, $collected);
+        }
+
+        // Then add this node
+        $collected[] = $id;
+    }
+
     public function updateContent(int $id, string $content): void
     {
         $this->connection->execute(

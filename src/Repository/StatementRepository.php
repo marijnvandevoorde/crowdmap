@@ -32,6 +32,12 @@ interface StatementRepository
 
     public function delete(int $id): void;
 
+    /**
+     * Delete multiple statements and all their descendants.
+     * @param int[] $statementIds
+     */
+    public function deleteWithDescendants(array $statementIds): void;
+
     public function updateContent(int $id, string $content): void;
 
     public function updateParentId(int $id, int $newParentId): void;

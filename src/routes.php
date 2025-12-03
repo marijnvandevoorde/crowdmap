@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use Crowdmap\Http\Action\AddStatementAction;
 use Crowdmap\Http\Action\CreateMindmapAction;
+use Crowdmap\Http\Action\DeleteStatementsAction;
 use Crowdmap\Http\Action\GetMindmapAction;
 use Crowdmap\Http\Action\GetMindmapModeratorAction;
 use Crowdmap\Http\Action\ListMindmapsAction;
@@ -27,6 +28,7 @@ return function (App $app) {
     $app->get('/api/mindmaps/{uuid}/moderate', GetMindmapModeratorAction::class);
     $app->post('/api/mindmaps/{uuid}/focus', SetFocusedStatementAction::class);
     $app->post('/api/mindmaps/{uuid}/merge', MergeStatementsAction::class);
+    $app->post('/api/mindmaps/{uuid}/delete', DeleteStatementsAction::class);
 
     // Mindmaps (public - contributor)
     $app->get('/api/mindmaps/{uuid}', GetMindmapAction::class);

@@ -43,11 +43,16 @@
           (nodeClick)="onNodeClick($event)"
           (nodeSelect)="onNodeSelect($event)"
         />
-        @if (canMerge()) {
-          <div class="merge-toolbar">
-            <span class="merge-info">{{ selectedNodeIds().size }} statements selected</span>
-            <button class="btn-merge" (click)="mergeSelected()">
-              Merge
+        @if (canDelete()) {
+          <div class="selection-toolbar">
+            <span class="selection-info">{{ selectedNodeIds().size }} statement{{ selectedNodeIds().size > 1 ? 's' : '' }} selected</span>
+            @if (canMerge()) {
+              <button class="btn-merge" (click)="mergeSelected()">
+                Merge
+              </button>
+            }
+            <button class="btn-delete" (click)="deleteSelected()">
+              Delete
             </button>
             <button class="btn-cancel" (click)="clearSelection()">
               Cancel

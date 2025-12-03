@@ -44,6 +44,16 @@ export class ModeratorComponent implements OnInit, OnDestroy {
     return parentIds.size === 1 && !parentIds.has(null); // All same parent, not root
   });
 
+  canDelete = computed(() => {
+    const selected = this.selectedNodeIds();
+    if (selected.size < 1) return false;
+
+    // Check none of the selected nodes is the root
+    const stmts = this.statements();
+    const selectedStatements = stmts.filter(s => selected.has(s.id));
+    return selectedStatements.every(s => s.parentId !== null);
+  });
+
   selectedStatements = computed(() => {
     const selected = this.selectedNodeIds();
     return this.statements().filter(s => selected.has(s.id));
@@ -184,6 +194,26 @@ export class ModeratorComponent implements OnInit, OnDestroy {
       },
       error: (err) => {
         console.error('Failed to merge statements', err);
+      },
+    });
+  }
+
+  deleteSelected(): void {
+    const selected = Array.from(this.selectedNodeIds());
+    if (selected.length < 1) return;
+
+    this.mindmapService.deleteStatements(this.uuid, selected).subscribe({
+      next: (response) => {
+        this.statements.set(response.statements);
+        this.clearSelection();
+        // Reset focus if the focused statement was deleted
+        const focusId = this.focusedStatementId();
+        if (focusId && !response.statements.some(s => s.id === focusId)) {
+          this.focusedStatementId.set(null);
+        }
+      },
+      error: (err) => {
+        console.error('Failed to delete statements', err);
       },
     });
   }

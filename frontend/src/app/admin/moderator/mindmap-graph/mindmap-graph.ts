@@ -293,9 +293,11 @@ export class MindmapGraphComponent implements AfterViewInit, OnChanges, OnDestro
         event.stopPropagation();
         if (event.metaKey || event.ctrlKey) {
           this.nodeSelect.emit(d.data.id);
-        } else {
-          this.nodeClick.emit(d.data.id);
         }
+      })
+      .on('dblclick', (event, d) => {
+        event.stopPropagation();
+        this.nodeClick.emit(d.data.id);
       });
 
     // Node background rect

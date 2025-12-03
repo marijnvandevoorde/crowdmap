@@ -100,4 +100,12 @@ export class MindmapService {
       { withCredentials: true }
     );
   }
+
+  deleteStatements(uuid: string, statementIds: number[]): Observable<{ statements: Statement[] }> {
+    return this.http.post<{ statements: Statement[] }>(
+      `${this.apiUrl}/mindmaps/${uuid}/delete`,
+      { statementIds },
+      { withCredentials: true }
+    );
+  }
 }
