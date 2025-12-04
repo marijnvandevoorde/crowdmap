@@ -14,6 +14,7 @@ use Crowdmap\Application\Command\Statement\AddStatementCommand;
 use Crowdmap\Application\Command\Statement\DeleteStatementsCommand;
 use Crowdmap\Application\Command\Statement\MergeStatementsCommand;
 use Crowdmap\Application\Command\Statement\UpdateStatementCommand;
+use Crowdmap\Application\Command\Vote\SetVoteCommand;
 use Crowdmap\Application\CommandBus\CommandBus;
 use Crowdmap\Application\CommandBus\SimpleCommandBus;
 use Crowdmap\Application\CommandHandler\Auth\GetCurrentUserHandler;
@@ -28,6 +29,7 @@ use Crowdmap\Application\CommandHandler\Statement\AddStatementHandler;
 use Crowdmap\Application\CommandHandler\Statement\DeleteStatementsHandler;
 use Crowdmap\Application\CommandHandler\Statement\MergeStatementsHandler;
 use Crowdmap\Application\CommandHandler\Statement\UpdateStatementHandler;
+use Crowdmap\Application\CommandHandler\Vote\SetVoteHandler;
 use Crowdmap\Database\DatabaseConnection;
 use Crowdmap\Database\SqliteConnection;
 use Crowdmap\Repository\MindmapRepository;
@@ -100,6 +102,10 @@ return [
     GetCurrentUserHandler::class => fn($c) => new GetCurrentUserHandler(
         $c->get(UserRepository::class),
     ),
+    SetVoteHandler::class => fn($c) => new SetVoteHandler(
+        $c->get(StatementRepository::class),
+        $c->get(VoteRepository::class),
+    ),
 
     // Command Bus
     CommandBus::class => function ($container) {
@@ -118,6 +124,7 @@ return [
         $bus->register(LoginCommand::class, LoginHandler::class);
         $bus->register(LogoutCommand::class, LogoutHandler::class);
         $bus->register(GetCurrentUserCommand::class, GetCurrentUserHandler::class);
+        $bus->register(SetVoteCommand::class, SetVoteHandler::class);
 
         return $bus;
     },
