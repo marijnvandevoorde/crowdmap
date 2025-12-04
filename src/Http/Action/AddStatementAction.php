@@ -9,7 +9,6 @@ use Crowdmap\Application\CommandBus\CommandBus;
 use Crowdmap\Domain\Exception\EntityNotFoundException;
 use Crowdmap\Domain\Exception\InvalidParentStatementException;
 use Crowdmap\Domain\Exception\ValidationException;
-use Crowdmap\Entity\Statement;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 
@@ -31,8 +30,7 @@ final class AddStatementAction
         );
 
         try {
-            /** @var Statement $statement */
-            $statement = $this->commandBus->dispatch($command);
+            $result = $this->commandBus->dispatch($command);
         } catch (EntityNotFoundException $e) {
             return $this->jsonResponse($response, ['error' => $e->getMessage()], 404);
         } catch (ValidationException | InvalidParentStatementException $e) {
@@ -41,12 +39,12 @@ final class AddStatementAction
 
         return $this->jsonResponse($response, [
             'statement' => [
-                'id' => $statement->id,
-                'parentId' => $statement->parentId,
-                'content' => $statement->content,
-                'sessionId' => $statement->sessionId,
+                'id' => $result->statement->id,
+                'parentId' => $result->statement->parentId,
+                'content' => $result->statement->content,
+                'sessionId' => $result->statement->sessionId,
                 'voteCount' => 1,
-                'createdAt' => $statement->createdAt->format('c'),
+                'createdAt' => $result->statement->createdAt->format('c'),
             ],
         ], 201);
     }

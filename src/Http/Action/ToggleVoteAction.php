@@ -39,8 +39,8 @@ final class ToggleVoteAction
         }
 
         return $this->jsonResponse($response, [
-            'voted' => $result['voted'],
-            'voteCount' => $result['voteCount'],
+            'voted' => $result->voted,
+            'voteCount' => $result->voteCount,
         ]);
     }
 

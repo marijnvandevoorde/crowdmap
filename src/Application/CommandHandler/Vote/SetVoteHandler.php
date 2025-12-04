@@ -7,6 +7,7 @@ namespace Crowdmap\Application\CommandHandler\Vote;
 use Crowdmap\Application\Command\Command;
 use Crowdmap\Application\Command\Vote\SetVoteCommand;
 use Crowdmap\Application\CommandHandler\CommandHandler;
+use Crowdmap\Application\CommandResponse\Vote\SetVoteResponse;
 use Crowdmap\Domain\Exception\CannotVoteOnOwnStatementException;
 use Crowdmap\Domain\Exception\EntityNotFoundException;
 use Crowdmap\Domain\Exception\ValidationException;
@@ -17,7 +18,7 @@ use Crowdmap\Repository\VoteRepository;
 /**
  * Handles the SetVoteCommand.
  *
- * @implements CommandHandler<SetVoteCommand>
+ * @implements CommandHandler<SetVoteCommand, SetVoteResponse>
  */
 final class SetVoteHandler implements CommandHandler
 {
@@ -28,9 +29,8 @@ final class SetVoteHandler implements CommandHandler
 
     /**
      * @param SetVoteCommand $command
-     * @return array{voted: bool, voteCount: int}
      */
-    public function handle(Command $command): array
+    public function handle(Command $command): SetVoteResponse
     {
         if (trim($command->sessionId) === '') {
             throw ValidationException::invalidInput('Session ID is required');
@@ -68,9 +68,6 @@ final class SetVoteHandler implements CommandHandler
 
         $voteCount = $this->voteRepository->countByStatementId($command->statementId);
 
-        return [
-            'voted' => $shouldHaveVote,
-            'voteCount' => $voteCount,
-        ];
+        return new SetVoteResponse($shouldHaveVote, $voteCount);
     }
 }

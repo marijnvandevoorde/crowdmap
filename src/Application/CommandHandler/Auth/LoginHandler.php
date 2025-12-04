@@ -7,15 +7,15 @@ namespace Crowdmap\Application\CommandHandler\Auth;
 use Crowdmap\Application\Command\Auth\LoginCommand;
 use Crowdmap\Application\Command\Command;
 use Crowdmap\Application\CommandHandler\CommandHandler;
+use Crowdmap\Application\CommandResponse\Auth\LoginResponse;
 use Crowdmap\Domain\Exception\InvalidCredentialsException;
 use Crowdmap\Domain\Exception\ValidationException;
-use Crowdmap\Entity\User;
 use Crowdmap\Repository\UserRepository;
 
 /**
  * Handles the LoginCommand.
  *
- * @implements CommandHandler<LoginCommand>
+ * @implements CommandHandler<LoginCommand, LoginResponse>
  */
 final class LoginHandler implements CommandHandler
 {
@@ -25,9 +25,8 @@ final class LoginHandler implements CommandHandler
 
     /**
      * @param LoginCommand $command
-     * @return User The authenticated user
      */
-    public function handle(Command $command): User
+    public function handle(Command $command): LoginResponse
     {
         $email = trim($command->email);
         $password = $command->password;
@@ -42,6 +41,6 @@ final class LoginHandler implements CommandHandler
             throw InvalidCredentialsException::create();
         }
 
-        return $user;
+        return new LoginResponse($user);
     }
 }

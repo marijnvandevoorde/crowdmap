@@ -7,6 +7,7 @@ namespace Crowdmap\Application\CommandHandler\Mindmap;
 use Crowdmap\Application\Command\Command;
 use Crowdmap\Application\Command\Mindmap\CreateMindmapCommand;
 use Crowdmap\Application\CommandHandler\CommandHandler;
+use Crowdmap\Application\CommandResponse\Mindmap\CreateMindmapResponse;
 use Crowdmap\Domain\Exception\ValidationException;
 use Crowdmap\Entity\Mindmap;
 use Crowdmap\Entity\Statement;
@@ -16,7 +17,7 @@ use Crowdmap\Repository\StatementRepository;
 /**
  * Handles the CreateMindmapCommand.
  *
- * @implements CommandHandler<CreateMindmapCommand>
+ * @implements CommandHandler<CreateMindmapCommand, CreateMindmapResponse>
  */
 final class CreateMindmapHandler implements CommandHandler
 {
@@ -27,9 +28,8 @@ final class CreateMindmapHandler implements CommandHandler
 
     /**
      * @param CreateMindmapCommand $command
-     * @return Mindmap The created mindmap
      */
-    public function handle(Command $command): Mindmap
+    public function handle(Command $command): CreateMindmapResponse
     {
         $question = trim($command->question);
 
@@ -43,6 +43,6 @@ final class CreateMindmapHandler implements CommandHandler
         $rootStatement = Statement::createRoot($mindmap->id, $question);
         $this->statementRepository->save($rootStatement);
 
-        return $mindmap;
+        return new CreateMindmapResponse($mindmap);
     }
 }

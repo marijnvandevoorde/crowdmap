@@ -7,6 +7,7 @@ namespace Crowdmap\Application\CommandHandler\Statement;
 use Crowdmap\Application\Command\Command;
 use Crowdmap\Application\Command\Statement\DeleteStatementsCommand;
 use Crowdmap\Application\CommandHandler\CommandHandler;
+use Crowdmap\Application\CommandResponse\CommandResponse;
 use Crowdmap\Domain\Exception\CannotDeleteRootException;
 use Crowdmap\Domain\Exception\EntityNotFoundException;
 use Crowdmap\Domain\Exception\UnauthorizedException;
@@ -17,7 +18,7 @@ use Crowdmap\Repository\StatementRepository;
 /**
  * Handles the DeleteStatementsCommand.
  *
- * @implements CommandHandler<DeleteStatementsCommand>
+ * @implements CommandHandler<DeleteStatementsCommand, null>
  */
 final class DeleteStatementsHandler implements CommandHandler
 {
@@ -29,7 +30,7 @@ final class DeleteStatementsHandler implements CommandHandler
     /**
      * @param DeleteStatementsCommand $command
      */
-    public function handle(Command $command): mixed
+    public function handle(Command $command): ?CommandResponse
     {
         if (empty($command->statementIds)) {
             throw ValidationException::invalidInput('At least 1 statement ID required');

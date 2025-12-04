@@ -7,14 +7,14 @@ namespace Crowdmap\Application\CommandHandler\Auth;
 use Crowdmap\Application\Command\Auth\GetCurrentUserCommand;
 use Crowdmap\Application\Command\Command;
 use Crowdmap\Application\CommandHandler\CommandHandler;
+use Crowdmap\Application\CommandResponse\Auth\GetCurrentUserResponse;
 use Crowdmap\Domain\Exception\EntityNotFoundException;
-use Crowdmap\Entity\User;
 use Crowdmap\Repository\UserRepository;
 
 /**
  * Handles the GetCurrentUserCommand.
  *
- * @implements CommandHandler<GetCurrentUserCommand>
+ * @implements CommandHandler<GetCurrentUserCommand, GetCurrentUserResponse>
  */
 final class GetCurrentUserHandler implements CommandHandler
 {
@@ -24,9 +24,8 @@ final class GetCurrentUserHandler implements CommandHandler
 
     /**
      * @param GetCurrentUserCommand $command
-     * @return User The current user
      */
-    public function handle(Command $command): User
+    public function handle(Command $command): GetCurrentUserResponse
     {
         $user = $this->userRepository->findById($command->userId);
 
@@ -34,6 +33,6 @@ final class GetCurrentUserHandler implements CommandHandler
             throw EntityNotFoundException::userNotFound($command->userId);
         }
 
-        return $user;
+        return new GetCurrentUserResponse($user);
     }
 }

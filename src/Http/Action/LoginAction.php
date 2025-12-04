@@ -27,7 +27,7 @@ final class LoginAction
         );
 
         try {
-            $user = $this->commandBus->dispatch($command);
+            $result = $this->commandBus->dispatch($command);
         } catch (ValidationException $e) {
             return $this->jsonResponse($response, ['error' => $e->getMessage()], 400);
         } catch (InvalidCredentialsException) {
@@ -35,13 +35,13 @@ final class LoginAction
         }
 
         session_start();
-        $_SESSION['user_id'] = $user->id;
+        $_SESSION['user_id'] = $result->user->id;
 
         return $this->jsonResponse($response, [
             'user' => [
-                'id' => $user->id,
-                'email' => $user->email,
-                'name' => $user->name,
+                'id' => $result->user->id,
+                'email' => $result->user->email,
+                'name' => $result->user->name,
             ],
         ]);
     }

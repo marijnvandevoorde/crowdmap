@@ -7,6 +7,7 @@ namespace Crowdmap\Application\CommandHandler\Statement;
 use Crowdmap\Application\Command\Command;
 use Crowdmap\Application\Command\Statement\AddStatementCommand;
 use Crowdmap\Application\CommandHandler\CommandHandler;
+use Crowdmap\Application\CommandResponse\Statement\AddStatementResponse;
 use Crowdmap\Domain\Exception\EntityNotFoundException;
 use Crowdmap\Domain\Exception\InvalidParentStatementException;
 use Crowdmap\Domain\Exception\ValidationException;
@@ -20,7 +21,7 @@ use Crowdmap\Repository\VoteRepository;
  * Handles the AddStatementCommand.
  * Creates a new statement and auto-votes for the creator.
  *
- * @implements CommandHandler<AddStatementCommand>
+ * @implements CommandHandler<AddStatementCommand, AddStatementResponse>
  */
 final class AddStatementHandler implements CommandHandler
 {
@@ -32,9 +33,8 @@ final class AddStatementHandler implements CommandHandler
 
     /**
      * @param AddStatementCommand $command
-     * @return Statement The created statement
      */
-    public function handle(Command $command): Statement
+    public function handle(Command $command): AddStatementResponse
     {
         $content = trim($command->content);
 
@@ -70,6 +70,6 @@ final class AddStatementHandler implements CommandHandler
         $vote = Vote::create($statement->id, $command->sessionId);
         $this->voteRepository->save($vote);
 
-        return $statement;
+        return new AddStatementResponse($statement);
     }
 }

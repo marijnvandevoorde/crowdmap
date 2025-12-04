@@ -7,13 +7,14 @@ namespace Crowdmap\Application\CommandHandler\Mindmap;
 use Crowdmap\Application\Command\Command;
 use Crowdmap\Application\Command\Mindmap\ListMindmapsCommand;
 use Crowdmap\Application\CommandHandler\CommandHandler;
+use Crowdmap\Application\CommandResponse\Mindmap\ListMindmapsResponse;
 use Crowdmap\Repository\MindmapRepository;
 use Crowdmap\Repository\StatementRepository;
 
 /**
  * Handles the ListMindmapsCommand.
  *
- * @implements CommandHandler<ListMindmapsCommand>
+ * @implements CommandHandler<ListMindmapsCommand, ListMindmapsResponse>
  */
 final class ListMindmapsHandler implements CommandHandler
 {
@@ -24,18 +25,19 @@ final class ListMindmapsHandler implements CommandHandler
 
     /**
      * @param ListMindmapsCommand $command
-     * @return array List of mindmaps with their root questions
      */
-    public function handle(Command $command): array
+    public function handle(Command $command): ListMindmapsResponse
     {
         $mindmaps = $this->mindmapRepository->findByUserId($command->userId);
 
-        return array_map(function ($mindmap) {
+        $items = array_map(function ($mindmap) {
             $rootStatement = $this->statementRepository->findRootByMindmapId($mindmap->id);
             return [
                 'mindmap' => $mindmap,
                 'question' => $rootStatement?->content,
             ];
         }, $mindmaps);
+
+        return new ListMindmapsResponse($items);
     }
 }

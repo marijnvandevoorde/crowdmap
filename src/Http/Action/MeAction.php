@@ -29,16 +29,16 @@ final class MeAction
         );
 
         try {
-            $user = $this->commandBus->dispatch($command);
+            $result = $this->commandBus->dispatch($command);
         } catch (EntityNotFoundException) {
             return $this->jsonResponse($response, ['error' => 'User not found'], 401);
         }
 
         return $this->jsonResponse($response, [
             'user' => [
-                'id' => $user->id,
-                'email' => $user->email,
-                'name' => $user->name,
+                'id' => $result->user->id,
+                'email' => $result->user->email,
+                'name' => $result->user->name,
             ],
         ]);
     }

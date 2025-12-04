@@ -32,15 +32,15 @@ final class CreateMindmapAction
         );
 
         try {
-            $mindmap = $this->commandBus->dispatch($command);
+            $result = $this->commandBus->dispatch($command);
         } catch (ValidationException $e) {
             return $this->jsonResponse($response, ['error' => $e->getMessage()], 400);
         }
 
         return $this->jsonResponse($response, [
             'mindmap' => [
-                'id' => $mindmap->id,
-                'uuid' => $mindmap->uuid,
+                'id' => $result->mindmap->id,
+                'uuid' => $result->mindmap->uuid,
             ],
         ], 201);
     }

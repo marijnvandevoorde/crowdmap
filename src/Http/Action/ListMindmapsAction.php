@@ -36,7 +36,7 @@ final class ListMindmapsAction
                 'question' => $item['question'],
                 'createdAt' => $item['mindmap']->createdAt->format('c'),
             ];
-        }, $result);
+        }, $result->mindmaps);
 
         return $this->jsonResponse($response, ['mindmaps' => $mindmaps]);
     }

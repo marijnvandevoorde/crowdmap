@@ -7,6 +7,7 @@ namespace Crowdmap\Application\CommandHandler\Mindmap;
 use Crowdmap\Application\Command\Command;
 use Crowdmap\Application\Command\Mindmap\SetFocusedStatementCommand;
 use Crowdmap\Application\CommandHandler\CommandHandler;
+use Crowdmap\Application\CommandResponse\CommandResponse;
 use Crowdmap\Domain\Exception\EntityNotFoundException;
 use Crowdmap\Domain\Exception\UnauthorizedException;
 use Crowdmap\Repository\MindmapRepository;
@@ -15,7 +16,7 @@ use Crowdmap\Repository\StatementRepository;
 /**
  * Handles the SetFocusedStatementCommand.
  *
- * @implements CommandHandler<SetFocusedStatementCommand>
+ * @implements CommandHandler<SetFocusedStatementCommand, null>
  */
 final class SetFocusedStatementHandler implements CommandHandler
 {
@@ -27,7 +28,7 @@ final class SetFocusedStatementHandler implements CommandHandler
     /**
      * @param SetFocusedStatementCommand $command
      */
-    public function handle(Command $command): mixed
+    public function handle(Command $command): ?CommandResponse
     {
         $mindmap = $this->mindmapRepository->findByUuid($command->mindmapUuid);
 

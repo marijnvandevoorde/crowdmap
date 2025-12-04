@@ -7,6 +7,7 @@ namespace Crowdmap\Application\CommandHandler\Statement;
 use Crowdmap\Application\Command\Command;
 use Crowdmap\Application\Command\Statement\MergeStatementsCommand;
 use Crowdmap\Application\CommandHandler\CommandHandler;
+use Crowdmap\Application\CommandResponse\Statement\MergeStatementsResponse;
 use Crowdmap\Domain\Exception\EntityNotFoundException;
 use Crowdmap\Domain\Exception\StatementsNotSiblingsException;
 use Crowdmap\Domain\Exception\UnauthorizedException;
@@ -18,7 +19,7 @@ use Crowdmap\Repository\StatementRepository;
 /**
  * Handles the MergeStatementsCommand.
  *
- * @implements CommandHandler<MergeStatementsCommand>
+ * @implements CommandHandler<MergeStatementsCommand, MergeStatementsResponse>
  */
 final class MergeStatementsHandler implements CommandHandler
 {
@@ -29,9 +30,8 @@ final class MergeStatementsHandler implements CommandHandler
 
     /**
      * @param MergeStatementsCommand $command
-     * @return Statement The merged statement
      */
-    public function handle(Command $command): Statement
+    public function handle(Command $command): MergeStatementsResponse
     {
         if (count($command->statementIds) < 2) {
             throw ValidationException::invalidInput('At least 2 statement IDs required');
@@ -65,8 +65,10 @@ final class MergeStatementsHandler implements CommandHandler
             throw StatementsNotSiblingsException::create();
         }
 
-        return $this->statementRepository->merge(
+        $mergedStatement = $this->statementRepository->merge(
             array_map('intval', $command->statementIds)
         );
+
+        return new MergeStatementsResponse($mergedStatement);
     }
 }

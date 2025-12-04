@@ -28,7 +28,6 @@ final class GetMindmapAction
             return $this->jsonResponse($response, ['error' => $e->getMessage()], 404);
         }
 
-        $mindmap = $result['mindmap'];
         $statements = array_map(function ($item) {
             return [
                 'id' => $item['statement']->id,
@@ -38,15 +37,15 @@ final class GetMindmapAction
                 'voteCount' => $item['vote_count'],
                 'createdAt' => $item['statement']->createdAt->format('c'),
             ];
-        }, $result['statements']);
+        }, $result->statementsWithVotes);
 
         return $this->jsonResponse($response, [
             'mindmap' => [
-                'id' => $mindmap->id,
-                'uuid' => $mindmap->uuid,
-                'userId' => $mindmap->userId,
-                'focusedStatementId' => $mindmap->focusedStatementId,
-                'createdAt' => $mindmap->createdAt->format('c'),
+                'id' => $result->mindmap->id,
+                'uuid' => $result->mindmap->uuid,
+                'userId' => $result->mindmap->userId,
+                'focusedStatementId' => $result->mindmap->focusedStatementId,
+                'createdAt' => $result->mindmap->createdAt->format('c'),
             ],
             'statements' => $statements,
         ]);

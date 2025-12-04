@@ -7,6 +7,7 @@ namespace Crowdmap\Application\CommandHandler\Statement;
 use Crowdmap\Application\Command\Command;
 use Crowdmap\Application\Command\Statement\UpdateStatementCommand;
 use Crowdmap\Application\CommandHandler\CommandHandler;
+use Crowdmap\Application\CommandResponse\CommandResponse;
 use Crowdmap\Domain\Exception\EntityNotFoundException;
 use Crowdmap\Domain\Exception\UnauthorizedException;
 use Crowdmap\Domain\Exception\ValidationException;
@@ -16,7 +17,7 @@ use Crowdmap\Repository\StatementRepository;
 /**
  * Handles the UpdateStatementCommand.
  *
- * @implements CommandHandler<UpdateStatementCommand>
+ * @implements CommandHandler<UpdateStatementCommand, null>
  */
 final class UpdateStatementHandler implements CommandHandler
 {
@@ -28,7 +29,7 @@ final class UpdateStatementHandler implements CommandHandler
     /**
      * @param UpdateStatementCommand $command
      */
-    public function handle(Command $command): mixed
+    public function handle(Command $command): ?CommandResponse
     {
         $content = trim($command->content);
 

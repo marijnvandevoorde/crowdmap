@@ -38,7 +38,6 @@ final class GetMindmapModeratorAction
             return $this->jsonResponse($response, ['error' => 'Not authorized'], 403);
         }
 
-        $mindmap = $result['mindmap'];
         $statements = array_map(function ($item) {
             return [
                 'id' => $item['statement']->id,
@@ -47,20 +46,20 @@ final class GetMindmapModeratorAction
                 'voteCount' => $item['vote_count'],
                 'createdAt' => $item['statement']->createdAt->format('c'),
             ];
-        }, $result['statements']);
+        }, $result->statementsWithVotes);
 
         $appUrl = rtrim(getenv('APP_URL') ?: 'http://localhost:8080', '/');
 
         return $this->jsonResponse($response, [
             'mindmap' => [
-                'id' => $mindmap->id,
-                'uuid' => $mindmap->uuid,
-                'userId' => $mindmap->userId,
-                'focusedStatementId' => $mindmap->focusedStatementId,
-                'createdAt' => $mindmap->createdAt->format('c'),
+                'id' => $result->mindmap->id,
+                'uuid' => $result->mindmap->uuid,
+                'userId' => $result->mindmap->userId,
+                'focusedStatementId' => $result->mindmap->focusedStatementId,
+                'createdAt' => $result->mindmap->createdAt->format('c'),
             ],
             'statements' => $statements,
-            'contributorUrl' => $appUrl . '/contribute/' . $mindmap->uuid,
+            'contributorUrl' => $appUrl . '/contribute/' . $result->mindmap->uuid,
         ]);
     }
 

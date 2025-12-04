@@ -7,6 +7,7 @@ namespace Crowdmap\Application\CommandHandler\Mindmap;
 use Crowdmap\Application\Command\Command;
 use Crowdmap\Application\Command\Mindmap\GetMindmapCommand;
 use Crowdmap\Application\CommandHandler\CommandHandler;
+use Crowdmap\Application\CommandResponse\Mindmap\GetMindmapResponse;
 use Crowdmap\Domain\Exception\EntityNotFoundException;
 use Crowdmap\Repository\MindmapRepository;
 use Crowdmap\Repository\StatementRepository;
@@ -14,7 +15,7 @@ use Crowdmap\Repository\StatementRepository;
 /**
  * Handles the GetMindmapCommand.
  *
- * @implements CommandHandler<GetMindmapCommand>
+ * @implements CommandHandler<GetMindmapCommand, GetMindmapResponse>
  */
 final class GetMindmapHandler implements CommandHandler
 {
@@ -25,9 +26,8 @@ final class GetMindmapHandler implements CommandHandler
 
     /**
      * @param GetMindmapCommand $command
-     * @return array{mindmap: \Crowdmap\Entity\Mindmap, statements: array}
      */
-    public function handle(Command $command): array
+    public function handle(Command $command): GetMindmapResponse
     {
         $mindmap = $this->mindmapRepository->findByUuid($command->mindmapUuid);
 
@@ -37,9 +37,6 @@ final class GetMindmapHandler implements CommandHandler
 
         $statementsWithVotes = $this->statementRepository->findByMindmapIdWithVoteCounts($mindmap->id);
 
-        return [
-            'mindmap' => $mindmap,
-            'statements' => $statementsWithVotes,
-        ];
+        return new GetMindmapResponse($mindmap, $statementsWithVotes);
     }
 }
