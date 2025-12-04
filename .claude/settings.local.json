@@ -17,7 +17,9 @@
       "Bash(npm run build:*)",
       "Bash(docker logs:*)",
       "Bash(docker exec:*)",
-      "Bash(npx tsc:*)"
+      "Bash(npx tsc:*)",
+      "Bash(git add:*)",
+      "Bash(git commit -m \"$(cat <<''EOF''\nrefactor(MergeStatements): apply Command/Handler pattern\n\n- Create MergeStatementsCommand for merging sibling statements\n- Create MergeStatementsHandler with validation and business logic\n- Add StatementsNotSiblingsException domain exception\n- Refactor MergeStatementsAction to delegate to command bus\n- Register handler in container\n\nHandler validates ownership, checks statements exist in mindmap,\nand ensures all statements share the same parent before merging.\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")"
     ],
     "deny": [],
     "ask": []
