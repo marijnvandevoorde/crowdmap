@@ -27,7 +27,7 @@ final class SetFocusedStatementHandler implements CommandHandler
     /**
      * @param SetFocusedStatementCommand $command
      */
-    public function handle(Command $command): void
+    public function handle(Command $command): mixed
     {
         $mindmap = $this->mindmapRepository->findByUuid($command->mindmapUuid);
 
@@ -49,5 +49,7 @@ final class SetFocusedStatementHandler implements CommandHandler
         }
 
         $this->mindmapRepository->updateFocusedStatement($mindmap->id, $command->statementId);
+
+        return null;
     }
 }

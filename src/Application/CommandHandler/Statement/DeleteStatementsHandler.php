@@ -29,7 +29,7 @@ final class DeleteStatementsHandler implements CommandHandler
     /**
      * @param DeleteStatementsCommand $command
      */
-    public function handle(Command $command): void
+    public function handle(Command $command): mixed
     {
         if (empty($command->statementIds)) {
             throw ValidationException::invalidInput('At least 1 statement ID required');
@@ -61,5 +61,7 @@ final class DeleteStatementsHandler implements CommandHandler
         $this->statementRepository->deleteWithDescendants(
             array_map('intval', $command->statementIds)
         );
+
+        return null;
     }
 }

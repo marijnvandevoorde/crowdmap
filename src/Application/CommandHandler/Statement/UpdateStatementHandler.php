@@ -28,7 +28,7 @@ final class UpdateStatementHandler implements CommandHandler
     /**
      * @param UpdateStatementCommand $command
      */
-    public function handle(Command $command): void
+    public function handle(Command $command): mixed
     {
         $content = trim($command->content);
 
@@ -53,5 +53,7 @@ final class UpdateStatementHandler implements CommandHandler
         }
 
         $this->statementRepository->updateContent($command->statementId, $content);
+
+        return null;
     }
 }

@@ -18,9 +18,11 @@ final class LogoutHandler implements CommandHandler
     /**
      * @param LogoutCommand $command
      */
-    public function handle(Command $command): void
+    public function handle(Command $command): mixed
     {
         session_start();
         session_destroy();
+
+        return null;
     }
 }
