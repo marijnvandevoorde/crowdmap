@@ -2,11 +2,13 @@
 
 declare(strict_types=1);
 
+use Crowdmap\Application\Command\Statement\AddStatementCommand;
 use Crowdmap\Application\Command\Statement\DeleteStatementsCommand;
 use Crowdmap\Application\Command\Statement\MergeStatementsCommand;
 use Crowdmap\Application\Command\Statement\UpdateStatementCommand;
 use Crowdmap\Application\CommandBus\CommandBus;
 use Crowdmap\Application\CommandBus\SimpleCommandBus;
+use Crowdmap\Application\CommandHandler\Statement\AddStatementHandler;
 use Crowdmap\Application\CommandHandler\Statement\DeleteStatementsHandler;
 use Crowdmap\Application\CommandHandler\Statement\MergeStatementsHandler;
 use Crowdmap\Application\CommandHandler\Statement\UpdateStatementHandler;
@@ -38,6 +40,11 @@ return [
     VoteRepository::class => fn($c) => new SqliteVoteRepository($c->get(DatabaseConnection::class)),
 
     // Command Handlers
+    AddStatementHandler::class => fn($c) => new AddStatementHandler(
+        $c->get(MindmapRepository::class),
+        $c->get(StatementRepository::class),
+        $c->get(VoteRepository::class),
+    ),
     UpdateStatementHandler::class => fn($c) => new UpdateStatementHandler(
         $c->get(MindmapRepository::class),
         $c->get(StatementRepository::class),
@@ -56,6 +63,7 @@ return [
         $bus = new SimpleCommandBus($container);
 
         // Register command -> handler mappings
+        $bus->register(AddStatementCommand::class, AddStatementHandler::class);
         $bus->register(UpdateStatementCommand::class, UpdateStatementHandler::class);
         $bus->register(DeleteStatementsCommand::class, DeleteStatementsHandler::class);
         $bus->register(MergeStatementsCommand::class, MergeStatementsHandler::class);
