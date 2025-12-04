@@ -2,6 +2,34 @@
 
 declare(strict_types=1);
 
+use Crowdmap\Application\Command\Auth\GetCurrentUserCommand;
+use Crowdmap\Application\Command\Auth\LoginCommand;
+use Crowdmap\Application\Command\Auth\LogoutCommand;
+use Crowdmap\Application\Command\Mindmap\CreateMindmapCommand;
+use Crowdmap\Application\Command\Mindmap\GetMindmapCommand;
+use Crowdmap\Application\Command\Mindmap\GetMindmapForModerationCommand;
+use Crowdmap\Application\Command\Mindmap\ListMindmapsCommand;
+use Crowdmap\Application\Command\Mindmap\SetFocusedStatementCommand;
+use Crowdmap\Application\Command\Statement\AddStatementCommand;
+use Crowdmap\Application\Command\Statement\DeleteStatementsCommand;
+use Crowdmap\Application\Command\Statement\MergeStatementsCommand;
+use Crowdmap\Application\Command\Statement\UpdateStatementCommand;
+use Crowdmap\Application\Command\Vote\SetVoteCommand;
+use Crowdmap\Application\CommandBus\CommandBus;
+use Crowdmap\Application\CommandBus\SimpleCommandBus;
+use Crowdmap\Application\CommandHandler\Auth\GetCurrentUserHandler;
+use Crowdmap\Application\CommandHandler\Auth\LoginHandler;
+use Crowdmap\Application\CommandHandler\Auth\LogoutHandler;
+use Crowdmap\Application\CommandHandler\Mindmap\CreateMindmapHandler;
+use Crowdmap\Application\CommandHandler\Mindmap\GetMindmapForModerationHandler;
+use Crowdmap\Application\CommandHandler\Mindmap\GetMindmapHandler;
+use Crowdmap\Application\CommandHandler\Mindmap\ListMindmapsHandler;
+use Crowdmap\Application\CommandHandler\Mindmap\SetFocusedStatementHandler;
+use Crowdmap\Application\CommandHandler\Statement\AddStatementHandler;
+use Crowdmap\Application\CommandHandler\Statement\DeleteStatementsHandler;
+use Crowdmap\Application\CommandHandler\Statement\MergeStatementsHandler;
+use Crowdmap\Application\CommandHandler\Statement\UpdateStatementHandler;
+use Crowdmap\Application\CommandHandler\Vote\SetVoteHandler;
 use Crowdmap\Database\DatabaseConnection;
 use Crowdmap\Database\SqliteConnection;
 use Crowdmap\Repository\MindmapRepository;
@@ -14,28 +42,90 @@ use Crowdmap\Repository\UserRepository;
 use Crowdmap\Repository\VoteRepository;
 
 return [
+    // Infrastructure - Database
     DatabaseConnection::class => function () {
         $dbPath = getenv('DB_PATH') ?: 'database/crowdmap.sqlite';
-        // Make path absolute if relative
         if ($dbPath[0] !== '/') {
             $dbPath = __DIR__ . '/../' . $dbPath;
         }
         return new SqliteConnection($dbPath);
     },
 
-    UserRepository::class => function ($container) {
-        return new SqliteUserRepository($container->get(DatabaseConnection::class));
-    },
+    // Repositories
+    UserRepository::class => fn($c) => new SqliteUserRepository($c->get(DatabaseConnection::class)),
+    MindmapRepository::class => fn($c) => new SqliteMindmapRepository($c->get(DatabaseConnection::class)),
+    StatementRepository::class => fn($c) => new SqliteStatementRepository($c->get(DatabaseConnection::class)),
+    VoteRepository::class => fn($c) => new SqliteVoteRepository($c->get(DatabaseConnection::class)),
 
-    MindmapRepository::class => function ($container) {
-        return new SqliteMindmapRepository($container->get(DatabaseConnection::class));
-    },
+    // Command Handlers
+    AddStatementHandler::class => fn($c) => new AddStatementHandler(
+        $c->get(MindmapRepository::class),
+        $c->get(StatementRepository::class),
+        $c->get(VoteRepository::class),
+    ),
+    UpdateStatementHandler::class => fn($c) => new UpdateStatementHandler(
+        $c->get(MindmapRepository::class),
+        $c->get(StatementRepository::class),
+    ),
+    DeleteStatementsHandler::class => fn($c) => new DeleteStatementsHandler(
+        $c->get(MindmapRepository::class),
+        $c->get(StatementRepository::class),
+    ),
+    MergeStatementsHandler::class => fn($c) => new MergeStatementsHandler(
+        $c->get(MindmapRepository::class),
+        $c->get(StatementRepository::class),
+    ),
+    SetFocusedStatementHandler::class => fn($c) => new SetFocusedStatementHandler(
+        $c->get(MindmapRepository::class),
+        $c->get(StatementRepository::class),
+    ),
+    CreateMindmapHandler::class => fn($c) => new CreateMindmapHandler(
+        $c->get(MindmapRepository::class),
+        $c->get(StatementRepository::class),
+    ),
+    GetMindmapHandler::class => fn($c) => new GetMindmapHandler(
+        $c->get(MindmapRepository::class),
+        $c->get(StatementRepository::class),
+    ),
+    GetMindmapForModerationHandler::class => fn($c) => new GetMindmapForModerationHandler(
+        $c->get(MindmapRepository::class),
+        $c->get(StatementRepository::class),
+    ),
+    ListMindmapsHandler::class => fn($c) => new ListMindmapsHandler(
+        $c->get(MindmapRepository::class),
+        $c->get(StatementRepository::class),
+    ),
+    LoginHandler::class => fn($c) => new LoginHandler(
+        $c->get(UserRepository::class),
+    ),
+    LogoutHandler::class => fn() => new LogoutHandler(),
+    GetCurrentUserHandler::class => fn($c) => new GetCurrentUserHandler(
+        $c->get(UserRepository::class),
+    ),
+    SetVoteHandler::class => fn($c) => new SetVoteHandler(
+        $c->get(StatementRepository::class),
+        $c->get(VoteRepository::class),
+    ),
 
-    StatementRepository::class => function ($container) {
-        return new SqliteStatementRepository($container->get(DatabaseConnection::class));
-    },
+    // Command Bus
+    CommandBus::class => function ($container) {
+        $bus = new SimpleCommandBus($container);
 
-    VoteRepository::class => function ($container) {
-        return new SqliteVoteRepository($container->get(DatabaseConnection::class));
+        // Register command -> handler mappings
+        $bus->register(AddStatementCommand::class, AddStatementHandler::class);
+        $bus->register(UpdateStatementCommand::class, UpdateStatementHandler::class);
+        $bus->register(DeleteStatementsCommand::class, DeleteStatementsHandler::class);
+        $bus->register(MergeStatementsCommand::class, MergeStatementsHandler::class);
+        $bus->register(SetFocusedStatementCommand::class, SetFocusedStatementHandler::class);
+        $bus->register(CreateMindmapCommand::class, CreateMindmapHandler::class);
+        $bus->register(GetMindmapCommand::class, GetMindmapHandler::class);
+        $bus->register(GetMindmapForModerationCommand::class, GetMindmapForModerationHandler::class);
+        $bus->register(ListMindmapsCommand::class, ListMindmapsHandler::class);
+        $bus->register(LoginCommand::class, LoginHandler::class);
+        $bus->register(LogoutCommand::class, LogoutHandler::class);
+        $bus->register(GetCurrentUserCommand::class, GetCurrentUserHandler::class);
+        $bus->register(SetVoteCommand::class, SetVoteHandler::class);
+
+        return $bus;
     },
 ];

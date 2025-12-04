@@ -4,15 +4,19 @@ declare(strict_types=1);
 
 namespace Crowdmap\Http\Action;
 
-use Crowdmap\Repository\MindmapRepository;
+use Crowdmap\Application\Command\Statement\UpdateStatementCommand;
+use Crowdmap\Application\CommandBus\CommandBus;
+use Crowdmap\Domain\Exception\EntityNotFoundException;
+use Crowdmap\Domain\Exception\UnauthorizedException;
+use Crowdmap\Domain\Exception\ValidationException;
 use Crowdmap\Repository\StatementRepository;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 
-class UpdateStatementAction
+final class UpdateStatementAction
 {
     public function __construct(
-        private readonly MindmapRepository $mindmapRepository,
+        private readonly CommandBus $commandBus,
         private readonly StatementRepository $statementRepository,
     ) {}
 
@@ -24,44 +28,37 @@ class UpdateStatementAction
             return $this->jsonResponse($response, ['error' => 'Unauthorized'], 401);
         }
 
-        $mindmap = $this->mindmapRepository->findByUuid($args['uuid']);
-
-        if ($mindmap === null) {
-            return $this->jsonResponse($response, ['error' => 'Mindmap not found'], 404);
-        }
-
-        if ($mindmap->userId !== $_SESSION['user_id']) {
-            return $this->jsonResponse($response, ['error' => 'Not authorized'], 403);
-        }
-
-        $statementId = (int) $args['statementId'];
-        $statement = $this->statementRepository->findById($statementId);
-
-        if ($statement === null || $statement->mindmapId !== $mindmap->id) {
-            return $this->jsonResponse($response, ['error' => 'Statement not found'], 404);
-        }
-
         $body = json_decode((string) $request->getBody(), true);
-        $content = trim($body['content'] ?? '');
 
-        if ($content === '') {
-            return $this->jsonResponse($response, ['error' => 'Content cannot be empty'], 400);
+        $command = new UpdateStatementCommand(
+            mindmapUuid: $args['uuid'],
+            statementId: (int) $args['statementId'],
+            content: $body['content'] ?? '',
+            userId: $_SESSION['user_id'],
+        );
+
+        try {
+            $this->commandBus->dispatch($command);
+        } catch (UnauthorizedException) {
+            return $this->jsonResponse($response, ['error' => 'Not authorized'], 403);
+        } catch (EntityNotFoundException $e) {
+            return $this->jsonResponse($response, ['error' => $e->getMessage()], 404);
+        } catch (ValidationException $e) {
+            return $this->jsonResponse($response, ['error' => $e->getMessage()], 400);
         }
-
-        $this->statementRepository->updateContent($statementId, $content);
 
         // Return updated statements list
-        $statementsWithVotes = $this->statementRepository->findByMindmapIdWithVoteCounts($mindmap->id);
-        $statements = array_map(function ($item) {
-            return [
-                'id' => $item['statement']->id,
-                'parentId' => $item['statement']->parentId,
-                'content' => $item['statement']->content,
-                'sessionId' => $item['statement']->sessionId,
-                'voteCount' => $item['vote_count'],
-                'createdAt' => $item['statement']->createdAt->format('c'),
-            ];
-        }, $statementsWithVotes);
+        // Note: This could be moved to a Query/QueryHandler in CQRS style
+        $mindmap = $this->statementRepository->findById((int) $args['statementId']);
+        $statementsWithVotes = $this->statementRepository->findByMindmapIdWithVoteCounts($mindmap->mindmapId);
+        $statements = array_map(fn($item) => [
+            'id' => $item['statement']->id,
+            'parentId' => $item['statement']->parentId,
+            'content' => $item['statement']->content,
+            'sessionId' => $item['statement']->sessionId,
+            'voteCount' => $item['vote_count'],
+            'createdAt' => $item['statement']->createdAt->format('c'),
+        ], $statementsWithVotes);
 
         return $this->jsonResponse($response, ['statements' => $statements]);
     }

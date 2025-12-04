@@ -4,14 +4,21 @@ declare(strict_types=1);
 
 namespace Crowdmap\Http\Action;
 
+use Crowdmap\Application\Command\Statement\MergeStatementsCommand;
+use Crowdmap\Application\CommandBus\CommandBus;
+use Crowdmap\Domain\Exception\EntityNotFoundException;
+use Crowdmap\Domain\Exception\StatementsNotSiblingsException;
+use Crowdmap\Domain\Exception\UnauthorizedException;
+use Crowdmap\Domain\Exception\ValidationException;
 use Crowdmap\Repository\MindmapRepository;
 use Crowdmap\Repository\StatementRepository;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 
-class MergeStatementsAction
+final class MergeStatementsAction
 {
     public function __construct(
+        private readonly CommandBus $commandBus,
         private readonly MindmapRepository $mindmapRepository,
         private readonly StatementRepository $statementRepository,
     ) {}
@@ -24,49 +31,35 @@ class MergeStatementsAction
             return $this->jsonResponse($response, ['error' => 'Unauthorized'], 401);
         }
 
-        $mindmap = $this->mindmapRepository->findByUuid($args['uuid']);
-
-        if ($mindmap === null) {
-            return $this->jsonResponse($response, ['error' => 'Mindmap not found'], 404);
-        }
-
-        if ($mindmap->userId !== $_SESSION['user_id']) {
-            return $this->jsonResponse($response, ['error' => 'Not authorized'], 403);
-        }
-
         $body = json_decode((string) $request->getBody(), true);
-        $statementIds = $body['statementIds'] ?? [];
 
-        if (!is_array($statementIds) || count($statementIds) < 2) {
-            return $this->jsonResponse($response, ['error' => 'At least 2 statement IDs required'], 400);
-        }
-
-        // Verify all statements belong to this mindmap
-        foreach ($statementIds as $statementId) {
-            $statement = $this->statementRepository->findById((int) $statementId);
-            if ($statement === null || $statement->mindmapId !== $mindmap->id) {
-                return $this->jsonResponse($response, ['error' => 'Statement not found or does not belong to this mindmap'], 404);
-            }
-        }
+        $command = new MergeStatementsCommand(
+            mindmapUuid: $args['uuid'],
+            statementIds: $body['statementIds'] ?? [],
+            userId: $_SESSION['user_id'],
+        );
 
         try {
-            $this->statementRepository->merge(array_map('intval', $statementIds));
-        } catch (\InvalidArgumentException $e) {
+            $this->commandBus->dispatch($command);
+        } catch (UnauthorizedException) {
+            return $this->jsonResponse($response, ['error' => 'Not authorized'], 403);
+        } catch (EntityNotFoundException $e) {
+            return $this->jsonResponse($response, ['error' => $e->getMessage()], 404);
+        } catch (ValidationException | StatementsNotSiblingsException $e) {
             return $this->jsonResponse($response, ['error' => $e->getMessage()], 400);
         }
 
         // Return updated statements list
+        $mindmap = $this->mindmapRepository->findByUuid($args['uuid']);
         $statementsWithVotes = $this->statementRepository->findByMindmapIdWithVoteCounts($mindmap->id);
-        $statements = array_map(function ($item) {
-            return [
-                'id' => $item['statement']->id,
-                'parentId' => $item['statement']->parentId,
-                'content' => $item['statement']->content,
-                'sessionId' => $item['statement']->sessionId,
-                'voteCount' => $item['vote_count'],
-                'createdAt' => $item['statement']->createdAt->format('c'),
-            ];
-        }, $statementsWithVotes);
+        $statements = array_map(fn($item) => [
+            'id' => $item['statement']->id,
+            'parentId' => $item['statement']->parentId,
+            'content' => $item['statement']->content,
+            'sessionId' => $item['statement']->sessionId,
+            'voteCount' => $item['vote_count'],
+            'createdAt' => $item['statement']->createdAt->format('c'),
+        ], $statementsWithVotes);
 
         return $this->jsonResponse($response, ['statements' => $statements]);
     }
