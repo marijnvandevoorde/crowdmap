@@ -2,12 +2,14 @@
 
 declare(strict_types=1);
 
+use Crowdmap\Application\Command\Mindmap\SetFocusedStatementCommand;
 use Crowdmap\Application\Command\Statement\AddStatementCommand;
 use Crowdmap\Application\Command\Statement\DeleteStatementsCommand;
 use Crowdmap\Application\Command\Statement\MergeStatementsCommand;
 use Crowdmap\Application\Command\Statement\UpdateStatementCommand;
 use Crowdmap\Application\CommandBus\CommandBus;
 use Crowdmap\Application\CommandBus\SimpleCommandBus;
+use Crowdmap\Application\CommandHandler\Mindmap\SetFocusedStatementHandler;
 use Crowdmap\Application\CommandHandler\Statement\AddStatementHandler;
 use Crowdmap\Application\CommandHandler\Statement\DeleteStatementsHandler;
 use Crowdmap\Application\CommandHandler\Statement\MergeStatementsHandler;
@@ -57,6 +59,10 @@ return [
         $c->get(MindmapRepository::class),
         $c->get(StatementRepository::class),
     ),
+    SetFocusedStatementHandler::class => fn($c) => new SetFocusedStatementHandler(
+        $c->get(MindmapRepository::class),
+        $c->get(StatementRepository::class),
+    ),
 
     // Command Bus
     CommandBus::class => function ($container) {
@@ -67,6 +73,7 @@ return [
         $bus->register(UpdateStatementCommand::class, UpdateStatementHandler::class);
         $bus->register(DeleteStatementsCommand::class, DeleteStatementsHandler::class);
         $bus->register(MergeStatementsCommand::class, MergeStatementsHandler::class);
+        $bus->register(SetFocusedStatementCommand::class, SetFocusedStatementHandler::class);
 
         return $bus;
     },
