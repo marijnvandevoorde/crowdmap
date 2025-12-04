@@ -4,29 +4,33 @@ declare(strict_types=1);
 
 namespace Crowdmap\Http\Action;
 
-use Crowdmap\Repository\UserRepository;
+use Crowdmap\Application\Command\Auth\LoginCommand;
+use Crowdmap\Application\CommandBus\CommandBus;
+use Crowdmap\Domain\Exception\InvalidCredentialsException;
+use Crowdmap\Domain\Exception\ValidationException;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 
-class LoginAction
+final class LoginAction
 {
     public function __construct(
-        private readonly UserRepository $userRepository,
+        private readonly CommandBus $commandBus,
     ) {}
 
     public function __invoke(Request $request, Response $response): Response
     {
         $data = $request->getParsedBody();
-        $email = $data['email'] ?? '';
-        $password = $data['password'] ?? '';
 
-        if (empty($email) || empty($password)) {
-            return $this->jsonResponse($response, ['error' => 'Email and password are required'], 400);
-        }
+        $command = new LoginCommand(
+            email: $data['email'] ?? '',
+            password: $data['password'] ?? '',
+        );
 
-        $user = $this->userRepository->findByEmail($email);
-
-        if ($user === null || !$user->verifyPassword($password)) {
+        try {
+            $user = $this->commandBus->dispatch($command);
+        } catch (ValidationException $e) {
+            return $this->jsonResponse($response, ['error' => $e->getMessage()], 400);
+        } catch (InvalidCredentialsException) {
             return $this->jsonResponse($response, ['error' => 'Invalid credentials'], 401);
         }
 

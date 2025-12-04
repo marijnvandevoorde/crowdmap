@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use Crowdmap\Application\Command\Auth\LoginCommand;
 use Crowdmap\Application\Command\Mindmap\CreateMindmapCommand;
 use Crowdmap\Application\Command\Mindmap\SetFocusedStatementCommand;
 use Crowdmap\Application\Command\Statement\AddStatementCommand;
@@ -10,6 +11,7 @@ use Crowdmap\Application\Command\Statement\MergeStatementsCommand;
 use Crowdmap\Application\Command\Statement\UpdateStatementCommand;
 use Crowdmap\Application\CommandBus\CommandBus;
 use Crowdmap\Application\CommandBus\SimpleCommandBus;
+use Crowdmap\Application\CommandHandler\Auth\LoginHandler;
 use Crowdmap\Application\CommandHandler\Mindmap\CreateMindmapHandler;
 use Crowdmap\Application\CommandHandler\Mindmap\SetFocusedStatementHandler;
 use Crowdmap\Application\CommandHandler\Statement\AddStatementHandler;
@@ -69,6 +71,9 @@ return [
         $c->get(MindmapRepository::class),
         $c->get(StatementRepository::class),
     ),
+    LoginHandler::class => fn($c) => new LoginHandler(
+        $c->get(UserRepository::class),
+    ),
 
     // Command Bus
     CommandBus::class => function ($container) {
@@ -81,6 +86,7 @@ return [
         $bus->register(MergeStatementsCommand::class, MergeStatementsHandler::class);
         $bus->register(SetFocusedStatementCommand::class, SetFocusedStatementHandler::class);
         $bus->register(CreateMindmapCommand::class, CreateMindmapHandler::class);
+        $bus->register(LoginCommand::class, LoginHandler::class);
 
         return $bus;
     },
