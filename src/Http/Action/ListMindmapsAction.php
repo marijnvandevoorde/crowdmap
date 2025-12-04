@@ -4,16 +4,15 @@ declare(strict_types=1);
 
 namespace Crowdmap\Http\Action;
 
-use Crowdmap\Repository\MindmapRepository;
-use Crowdmap\Repository\StatementRepository;
+use Crowdmap\Application\Command\Mindmap\ListMindmapsCommand;
+use Crowdmap\Application\CommandBus\CommandBus;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 
-class ListMindmapsAction
+final class ListMindmapsAction
 {
     public function __construct(
-        private readonly MindmapRepository $mindmapRepository,
-        private readonly StatementRepository $statementRepository,
+        private readonly CommandBus $commandBus,
     ) {}
 
     public function __invoke(Request $request, Response $response): Response
@@ -24,19 +23,22 @@ class ListMindmapsAction
             return $this->jsonResponse($response, ['error' => 'Not authenticated'], 401);
         }
 
-        $mindmaps = $this->mindmapRepository->findByUserId($_SESSION['user_id']);
+        $command = new ListMindmapsCommand(
+            userId: $_SESSION['user_id'],
+        );
 
-        $result = array_map(function ($mindmap) {
-            $rootStatement = $this->statementRepository->findRootByMindmapId($mindmap->id);
+        $result = $this->commandBus->dispatch($command);
+
+        $mindmaps = array_map(function ($item) {
             return [
-                'id' => $mindmap->id,
-                'uuid' => $mindmap->uuid,
-                'question' => $rootStatement?->content,
-                'createdAt' => $mindmap->createdAt->format('c'),
+                'id' => $item['mindmap']->id,
+                'uuid' => $item['mindmap']->uuid,
+                'question' => $item['question'],
+                'createdAt' => $item['mindmap']->createdAt->format('c'),
             ];
-        }, $mindmaps);
+        }, $result);
 
-        return $this->jsonResponse($response, ['mindmaps' => $result]);
+        return $this->jsonResponse($response, ['mindmaps' => $mindmaps]);
     }
 
     private function jsonResponse(Response $response, array $data, int $status = 200): Response

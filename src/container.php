@@ -8,6 +8,7 @@ use Crowdmap\Application\Command\Auth\LogoutCommand;
 use Crowdmap\Application\Command\Mindmap\CreateMindmapCommand;
 use Crowdmap\Application\Command\Mindmap\GetMindmapCommand;
 use Crowdmap\Application\Command\Mindmap\GetMindmapForModerationCommand;
+use Crowdmap\Application\Command\Mindmap\ListMindmapsCommand;
 use Crowdmap\Application\Command\Mindmap\SetFocusedStatementCommand;
 use Crowdmap\Application\Command\Statement\AddStatementCommand;
 use Crowdmap\Application\Command\Statement\DeleteStatementsCommand;
@@ -21,6 +22,7 @@ use Crowdmap\Application\CommandHandler\Auth\LogoutHandler;
 use Crowdmap\Application\CommandHandler\Mindmap\CreateMindmapHandler;
 use Crowdmap\Application\CommandHandler\Mindmap\GetMindmapForModerationHandler;
 use Crowdmap\Application\CommandHandler\Mindmap\GetMindmapHandler;
+use Crowdmap\Application\CommandHandler\Mindmap\ListMindmapsHandler;
 use Crowdmap\Application\CommandHandler\Mindmap\SetFocusedStatementHandler;
 use Crowdmap\Application\CommandHandler\Statement\AddStatementHandler;
 use Crowdmap\Application\CommandHandler\Statement\DeleteStatementsHandler;
@@ -87,6 +89,10 @@ return [
         $c->get(MindmapRepository::class),
         $c->get(StatementRepository::class),
     ),
+    ListMindmapsHandler::class => fn($c) => new ListMindmapsHandler(
+        $c->get(MindmapRepository::class),
+        $c->get(StatementRepository::class),
+    ),
     LoginHandler::class => fn($c) => new LoginHandler(
         $c->get(UserRepository::class),
     ),
@@ -108,6 +114,7 @@ return [
         $bus->register(CreateMindmapCommand::class, CreateMindmapHandler::class);
         $bus->register(GetMindmapCommand::class, GetMindmapHandler::class);
         $bus->register(GetMindmapForModerationCommand::class, GetMindmapForModerationHandler::class);
+        $bus->register(ListMindmapsCommand::class, ListMindmapsHandler::class);
         $bus->register(LoginCommand::class, LoginHandler::class);
         $bus->register(LogoutCommand::class, LogoutHandler::class);
         $bus->register(GetCurrentUserCommand::class, GetCurrentUserHandler::class);
