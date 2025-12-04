@@ -1,0 +1,25 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(chmod:*)",
+      "Bash(composer dump-autoload:*)",
+      "Bash(php bin/migrate:*)",
+      "Bash(composer require:*)",
+      "Bash(php:*)",
+      "Bash(npm install:*)",
+      "Bash(ng new:*)",
+      "Bash(ng generate:*)",
+      "Bash(ng build:*)",
+      "Bash(docker build:*)",
+      "Bash(docker compose build:*)",
+      "Bash(docker compose:*)",
+      "Bash(curl:*)",
+      "Bash(npm run build:*)",
+      "Bash(docker logs:*)",
+      "Bash(docker exec:*)",
+      "Bash(npx tsc:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

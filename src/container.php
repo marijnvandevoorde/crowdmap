@@ -2,9 +2,11 @@
 
 declare(strict_types=1);
 
+use Crowdmap\Application\Command\Statement\DeleteStatementsCommand;
 use Crowdmap\Application\Command\Statement\UpdateStatementCommand;
 use Crowdmap\Application\CommandBus\CommandBus;
 use Crowdmap\Application\CommandBus\SimpleCommandBus;
+use Crowdmap\Application\CommandHandler\Statement\DeleteStatementsHandler;
 use Crowdmap\Application\CommandHandler\Statement\UpdateStatementHandler;
 use Crowdmap\Database\DatabaseConnection;
 use Crowdmap\Database\SqliteConnection;
@@ -38,6 +40,10 @@ return [
         $c->get(MindmapRepository::class),
         $c->get(StatementRepository::class),
     ),
+    DeleteStatementsHandler::class => fn($c) => new DeleteStatementsHandler(
+        $c->get(MindmapRepository::class),
+        $c->get(StatementRepository::class),
+    ),
 
     // Command Bus
     CommandBus::class => function ($container) {
@@ -45,6 +51,7 @@ return [
 
         // Register command -> handler mappings
         $bus->register(UpdateStatementCommand::class, UpdateStatementHandler::class);
+        $bus->register(DeleteStatementsCommand::class, DeleteStatementsHandler::class);
 
         return $bus;
     },
