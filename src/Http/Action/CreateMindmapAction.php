@@ -4,18 +4,16 @@ declare(strict_types=1);
 
 namespace Crowdmap\Http\Action;
 
-use Crowdmap\Entity\Mindmap;
-use Crowdmap\Entity\Statement;
-use Crowdmap\Repository\MindmapRepository;
-use Crowdmap\Repository\StatementRepository;
+use Crowdmap\Application\Command\Mindmap\CreateMindmapCommand;
+use Crowdmap\Application\CommandBus\CommandBus;
+use Crowdmap\Domain\Exception\ValidationException;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 
-class CreateMindmapAction
+final class CreateMindmapAction
 {
     public function __construct(
-        private readonly MindmapRepository $mindmapRepository,
-        private readonly StatementRepository $statementRepository,
+        private readonly CommandBus $commandBus,
     ) {}
 
     public function __invoke(Request $request, Response $response): Response
@@ -27,17 +25,17 @@ class CreateMindmapAction
         }
 
         $data = $request->getParsedBody();
-        $question = trim($data['question'] ?? '');
 
-        if (empty($question)) {
-            return $this->jsonResponse($response, ['error' => 'Question is required'], 400);
+        $command = new CreateMindmapCommand(
+            question: $data['question'] ?? '',
+            userId: $_SESSION['user_id'],
+        );
+
+        try {
+            $mindmap = $this->commandBus->dispatch($command);
+        } catch (ValidationException $e) {
+            return $this->jsonResponse($response, ['error' => $e->getMessage()], 400);
         }
-
-        $mindmap = Mindmap::create($_SESSION['user_id']);
-        $mindmap = $this->mindmapRepository->save($mindmap);
-
-        $rootStatement = Statement::createRoot($mindmap->id, $question);
-        $this->statementRepository->save($rootStatement);
 
         return $this->jsonResponse($response, [
             'mindmap' => [
