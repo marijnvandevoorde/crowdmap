@@ -2,6 +2,10 @@
 
 declare(strict_types=1);
 
+use Crowdmap\Application\Command\Statement\UpdateStatementCommand;
+use Crowdmap\Application\CommandBus\CommandBus;
+use Crowdmap\Application\CommandBus\SimpleCommandBus;
+use Crowdmap\Application\CommandHandler\Statement\UpdateStatementHandler;
 use Crowdmap\Database\DatabaseConnection;
 use Crowdmap\Database\SqliteConnection;
 use Crowdmap\Repository\MindmapRepository;
@@ -14,28 +18,34 @@ use Crowdmap\Repository\UserRepository;
 use Crowdmap\Repository\VoteRepository;
 
 return [
+    // Infrastructure - Database
     DatabaseConnection::class => function () {
         $dbPath = getenv('DB_PATH') ?: 'database/crowdmap.sqlite';
-        // Make path absolute if relative
         if ($dbPath[0] !== '/') {
             $dbPath = __DIR__ . '/../' . $dbPath;
         }
         return new SqliteConnection($dbPath);
     },
 
-    UserRepository::class => function ($container) {
-        return new SqliteUserRepository($container->get(DatabaseConnection::class));
-    },
+    // Repositories
+    UserRepository::class => fn($c) => new SqliteUserRepository($c->get(DatabaseConnection::class)),
+    MindmapRepository::class => fn($c) => new SqliteMindmapRepository($c->get(DatabaseConnection::class)),
+    StatementRepository::class => fn($c) => new SqliteStatementRepository($c->get(DatabaseConnection::class)),
+    VoteRepository::class => fn($c) => new SqliteVoteRepository($c->get(DatabaseConnection::class)),
 
-    MindmapRepository::class => function ($container) {
-        return new SqliteMindmapRepository($container->get(DatabaseConnection::class));
-    },
+    // Command Handlers
+    UpdateStatementHandler::class => fn($c) => new UpdateStatementHandler(
+        $c->get(MindmapRepository::class),
+        $c->get(StatementRepository::class),
+    ),
 
-    StatementRepository::class => function ($container) {
-        return new SqliteStatementRepository($container->get(DatabaseConnection::class));
-    },
+    // Command Bus
+    CommandBus::class => function ($container) {
+        $bus = new SimpleCommandBus($container);
 
-    VoteRepository::class => function ($container) {
-        return new SqliteVoteRepository($container->get(DatabaseConnection::class));
+        // Register command -> handler mappings
+        $bus->register(UpdateStatementCommand::class, UpdateStatementHandler::class);
+
+        return $bus;
     },
 ];
