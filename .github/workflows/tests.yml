@@ -1,8 +1,6 @@
 name: Tests
 
 on:
-  push:
-    branches: [ main, feature/* ]
   pull_request:
     branches: [ main ]
 
@@ -39,14 +37,14 @@ jobs:
         run: composer install --prefer-dist --no-progress
 
       - name: Run test suite
-        run: vendor/bin/phpunit --testsuite Unit
+        run: vendor/bin/phpunit tests
 
       - name: Generate coverage report
-        if: matrix.php-version == '8.3'
-        run: vendor/bin/phpunit --testsuite Unit --coverage-clover coverage.xml
+        if: matrix.php-version == '8.4'
+        run: vendor/bin/phpunit tests --coverage-clover coverage.xml
 
       - name: Upload coverage to Codecov
-        if: matrix.php-version == '8.3'
+        if: matrix.php-version == '8.4'
         uses: codecov/codecov-action@v4
         with:
           files: ./coverage.xml
