@@ -9,7 +9,6 @@ use Crowdmap\Application\Command\Command;
 use Crowdmap\Application\CommandHandler\CommandHandler;
 use Crowdmap\Application\CommandResponse\Auth\LoginResponse;
 use Crowdmap\Domain\Exception\InvalidCredentialsException;
-use Crowdmap\Domain\Exception\ValidationException;
 use Crowdmap\Repository\UserRepository;
 
 /**
@@ -28,16 +27,10 @@ final class LoginHandler implements CommandHandler
      */
     public function handle(Command $command): LoginResponse
     {
-        $email = trim($command->email);
-        $password = $command->password;
+        // Command is self-validating, so we can trust it's valid
+        $user = $this->userRepository->findByEmail($command->email);
 
-        if ($email === '' || $password === '') {
-            throw ValidationException::invalidInput('Email and password are required');
-        }
-
-        $user = $this->userRepository->findByEmail($email);
-
-        if ($user === null || !$user->verifyPassword($password)) {
+        if ($user === null || !$user->verifyPassword($command->password)) {
             throw InvalidCredentialsException::create();
         }
 
