@@ -16,6 +16,7 @@ use Crowdmap\Entity\Vote;
 use Crowdmap\Repository\MindmapRepository;
 use Crowdmap\Repository\StatementRepository;
 use Crowdmap\Repository\VoteRepository;
+use PDOException;
 
 /**
  * Handles the AddStatementCommand.
@@ -64,11 +65,47 @@ final class AddStatementHandler implements CommandHandler
             $content,
             $command->sessionId,
         );
-        $statement = $this->statementRepository->save($statement);
 
-        // Auto-vote for the creator
-        $vote = Vote::create($statement->id, $command->sessionId);
-        $this->voteRepository->save($vote);
+        try {
+            // Try to insert the statement
+            $statement = $this->statementRepository->save($statement);
+
+            // Auto-vote for the creator
+            $vote = Vote::create($statement->id, $command->sessionId);
+            $this->voteRepository->save($vote);
+        } catch (PDOException $e) {
+            // Check if it's a unique constraint violation (SQLite error code 19 for CONSTRAINT)
+            if (str_contains($e->getMessage(), 'UNIQUE constraint failed') ||
+                str_contains($e->getMessage(), 'idx_statements_parent_content')) {
+                // Statement already exists, find it and add a vote instead
+                $existingStatement = $this->statementRepository->findByParentIdAndContent(
+                    $command->parentId,
+                    $content
+                );
+
+                if ($existingStatement === null) {
+                    // This shouldn't happen, but re-throw if it does
+                    throw $e;
+                }
+
+                // Check if user already voted for this statement
+                $existingVote = $this->voteRepository->findByStatementAndSession(
+                    $existingStatement->id,
+                    $command->sessionId
+                );
+
+                // Only add vote if user hasn't voted yet
+                if ($existingVote === null) {
+                    $vote = Vote::create($existingStatement->id, $command->sessionId);
+                    $this->voteRepository->save($vote);
+                }
+
+                $statement = $existingStatement;
+            } else {
+                // Different error, re-throw
+                throw $e;
+            }
+        }
 
         return new AddStatementResponse($statement);
     }

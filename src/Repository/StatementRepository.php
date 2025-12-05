@@ -20,6 +20,8 @@ interface StatementRepository
     /** @return Statement[] */
     public function findByParentId(int $parentId): array;
 
+    public function findByParentIdAndContent(int $parentId, string $content): ?Statement;
+
     /** @return array{statement: Statement, vote_count: int}[] */
     public function findByMindmapIdWithVoteCounts(int $mindmapId): array;
 

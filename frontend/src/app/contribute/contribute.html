@@ -22,6 +22,21 @@
     </main>
 
     <footer class="input-area">
+      @if (showSuggestions() && suggestions().length > 0) {
+        <div class="suggestions-dropdown">
+          <div class="suggestions-header">Similar reactions already exist:</div>
+          @for (suggestion of suggestions(); track suggestion.id; let i = $index) {
+            <div
+              class="suggestion-item"
+              [class.selected]="i === selectedSuggestionIndex()"
+              (click)="selectSuggestion(suggestion)"
+            >
+              <span class="suggestion-content">{{ suggestion.content }}</span>
+              <span class="suggestion-votes">{{ suggestion.voteCount }}</span>
+            </div>
+          }
+        </div>
+      }
       <form (ngSubmit)="submitReaction()">
         <input
           #reactionInput
@@ -30,6 +45,10 @@
           name="reaction"
           placeholder="Share your reaction..."
           autocomplete="off"
+          (input)="onInputChange()"
+          (focus)="onInputFocus()"
+          (blur)="onInputBlur()"
+          (keydown)="onInputKeydown($event)"
         />
         <button type="submit" [disabled]="submitting() || !newReaction.trim()">
           @if (submitting()) { ... } @else { Send }

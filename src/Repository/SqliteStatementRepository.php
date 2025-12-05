@@ -71,6 +71,16 @@ class SqliteStatementRepository implements StatementRepository
         return array_map([$this, 'hydrate'], $rows);
     }
 
+    public function findByParentIdAndContent(int $parentId, string $content): ?Statement
+    {
+        $rows = $this->connection->query(
+            'SELECT * FROM statements WHERE parent_id = :parent_id AND content = :content',
+            ['parent_id' => $parentId, 'content' => $content]
+        );
+
+        return empty($rows) ? null : $this->hydrate($rows[0]);
+    }
+
     public function findByMindmapIdWithVoteCounts(int $mindmapId): array
     {
         $rows = $this->connection->query(
