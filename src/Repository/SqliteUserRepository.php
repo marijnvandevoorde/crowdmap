@@ -51,14 +51,6 @@ class SqliteUserRepository implements UserRepository
         return $this->hydrate($rows[0]);
     }
 
-    public function delete(int $id): bool
-    {
-        return $this->connection->execute(
-            'DELETE FROM users WHERE id = :id',
-            ['id' => $id]
-        );
-    }
-
     private function insert(User $user): User
     {
         $this->connection->execute(

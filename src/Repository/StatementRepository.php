@@ -15,9 +15,6 @@ interface StatementRepository
     public function findRootByMindmapId(int $mindmapId): ?Statement;
 
     /** @return Statement[] */
-    public function findByMindmapId(int $mindmapId): array;
-
-    /** @return Statement[] */
     public function findByParentId(int $parentId): array;
 
     public function findByParentIdAndContent(int $parentId, string $content): ?Statement;
@@ -41,6 +38,4 @@ interface StatementRepository
     public function deleteWithDescendants(array $statementIds): void;
 
     public function updateContent(int $id, string $content): void;
-
-    public function updateParentId(int $id, int $newParentId): void;
 }
