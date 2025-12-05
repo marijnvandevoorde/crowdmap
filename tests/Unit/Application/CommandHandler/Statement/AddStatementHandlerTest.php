@@ -8,7 +8,6 @@ use Crowdmap\Application\Command\Statement\AddStatementCommand;
 use Crowdmap\Application\CommandHandler\Statement\AddStatementHandler;
 use Crowdmap\Domain\Exception\EntityNotFoundException;
 use Crowdmap\Domain\Exception\InvalidParentStatementException;
-use Crowdmap\Domain\Exception\ValidationException;
 use Crowdmap\Entity\Mindmap;
 use Crowdmap\Entity\Statement;
 use Crowdmap\Entity\Vote;
@@ -102,103 +101,6 @@ class AddStatementHandlerTest extends TestCase
         $this->assertSame('New statement', $response->statement->content);
     }
 
-    public function testTrimsContentBeforeSaving(): void
-    {
-        $command = new AddStatementCommand(
-            mindmapUuid: 'test-uuid',
-            parentId: 1,
-            content: '  Trimmed content  ',
-            sessionId: 'session123'
-        );
-
-        $mindmap = new Mindmap(
-            id: 1,
-            uuid: 'test-uuid',
-            userId: 1,
-            focusedStatementId: null,
-            createdAt: new DateTimeImmutable()
-        );
-
-        $parentStatement = new Statement(
-            id: 1,
-            mindmapId: 1,
-            parentId: null,
-            content: 'Root',
-            sessionId: null,
-            createdAt: new DateTimeImmutable()
-        );
-
-        $this->mindmapRepository->method('findByUuid')->willReturn($mindmap);
-        $this->statementRepository->method('findById')->willReturn($parentStatement);
-
-        $this->statementRepository
-            ->expects($this->once())
-            ->method('save')
-            ->with($this->callback(function (Statement $statement) {
-                return $statement->content === 'Trimmed content';
-            }))
-            ->willReturn(new Statement(
-                id: 2,
-                mindmapId: 1,
-                parentId: 1,
-                content: 'Trimmed content',
-                sessionId: 'session123',
-                createdAt: new DateTimeImmutable()
-            ));
-
-        $this->voteRepository->method('save');
-
-        $this->handler->handle($command);
-    }
-
-    public function testThrowsValidationExceptionWhenContentIsEmpty(): void
-    {
-        $command = new AddStatementCommand(
-            mindmapUuid: 'test-uuid',
-            parentId: 1,
-            content: '',
-            sessionId: 'session123'
-        );
-
-        $this->mindmapRepository->expects($this->never())->method('findByUuid');
-
-        $this->expectException(ValidationException::class);
-
-        $this->handler->handle($command);
-    }
-
-    public function testThrowsValidationExceptionWhenContentIsOnlyWhitespace(): void
-    {
-        $command = new AddStatementCommand(
-            mindmapUuid: 'test-uuid',
-            parentId: 1,
-            content: '   ',
-            sessionId: 'session123'
-        );
-
-        $this->mindmapRepository->expects($this->never())->method('findByUuid');
-
-        $this->expectException(ValidationException::class);
-
-        $this->handler->handle($command);
-    }
-
-    public function testThrowsValidationExceptionWhenSessionIdIsEmpty(): void
-    {
-        $command = new AddStatementCommand(
-            mindmapUuid: 'test-uuid',
-            parentId: 1,
-            content: 'Valid content',
-            sessionId: ''
-        );
-
-        $this->mindmapRepository->expects($this->never())->method('findByUuid');
-
-        $this->expectException(ValidationException::class);
-        $this->expectExceptionMessage('Session ID is required');
-
-        $this->handler->handle($command);
-    }
 
     public function testThrowsEntityNotFoundExceptionWhenMindmapNotFound(): void
     {

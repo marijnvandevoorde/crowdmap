@@ -10,7 +10,6 @@ use Crowdmap\Application\CommandHandler\CommandHandler;
 use Crowdmap\Application\CommandResponse\Statement\AddStatementResponse;
 use Crowdmap\Domain\Exception\EntityNotFoundException;
 use Crowdmap\Domain\Exception\InvalidParentStatementException;
-use Crowdmap\Domain\Exception\ValidationException;
 use Crowdmap\Entity\Statement;
 use Crowdmap\Entity\Vote;
 use Crowdmap\Repository\MindmapRepository;
@@ -37,16 +36,7 @@ final class AddStatementHandler implements CommandHandler
      */
     public function handle(Command $command): AddStatementResponse
     {
-        $content = trim($command->content);
-
-        if ($content === '') {
-            throw ValidationException::emptyContent();
-        }
-
-        if ($command->sessionId === '') {
-            throw ValidationException::invalidInput('Session ID is required');
-        }
-
+        // Command is self-validating, so we can trust it's valid
         $mindmap = $this->mindmapRepository->findByUuid($command->mindmapUuid);
 
         if ($mindmap === null) {
@@ -62,7 +52,7 @@ final class AddStatementHandler implements CommandHandler
         $statement = Statement::createReaction(
             $mindmap->id,
             $command->parentId,
-            $content,
+            $command->content,
             $command->sessionId,
         );
 
@@ -80,7 +70,7 @@ final class AddStatementHandler implements CommandHandler
                 // Statement already exists, find it and add a vote instead
                 $existingStatement = $this->statementRepository->findByParentIdAndContent(
                     $command->parentId,
-                    $content
+                    $command->content
                 );
 
                 if ($existingStatement === null) {
