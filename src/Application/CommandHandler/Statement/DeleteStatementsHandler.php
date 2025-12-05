@@ -11,7 +11,6 @@ use Crowdmap\Application\CommandResponse\CommandResponse;
 use Crowdmap\Domain\Exception\CannotDeleteRootException;
 use Crowdmap\Domain\Exception\EntityNotFoundException;
 use Crowdmap\Domain\Exception\UnauthorizedException;
-use Crowdmap\Domain\Exception\ValidationException;
 use Crowdmap\Repository\MindmapRepository;
 use Crowdmap\Repository\StatementRepository;
 
@@ -32,10 +31,7 @@ final class DeleteStatementsHandler implements CommandHandler
      */
     public function handle(Command $command): ?CommandResponse
     {
-        if (empty($command->statementIds)) {
-            throw ValidationException::invalidInput('At least 1 statement ID required');
-        }
-
+        // Command is self-validating, so we can trust it's valid
         $mindmap = $this->mindmapRepository->findByUuid($command->mindmapUuid);
 
         if ($mindmap === null) {
