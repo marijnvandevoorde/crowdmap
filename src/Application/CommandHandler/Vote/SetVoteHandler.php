@@ -10,7 +10,6 @@ use Crowdmap\Application\CommandHandler\CommandHandler;
 use Crowdmap\Application\CommandResponse\Vote\SetVoteResponse;
 use Crowdmap\Domain\Exception\CannotVoteOnOwnStatementException;
 use Crowdmap\Domain\Exception\EntityNotFoundException;
-use Crowdmap\Domain\Exception\ValidationException;
 use Crowdmap\Entity\Vote;
 use Crowdmap\Repository\StatementRepository;
 use Crowdmap\Repository\VoteRepository;
@@ -32,10 +31,7 @@ final class SetVoteHandler implements CommandHandler
      */
     public function handle(Command $command): SetVoteResponse
     {
-        if (trim($command->sessionId) === '') {
-            throw ValidationException::invalidInput('Session ID is required');
-        }
-
+        // Command is self-validating, so we can trust it's valid
         $statement = $this->statementRepository->findById($command->statementId);
 
         if ($statement === null) {
