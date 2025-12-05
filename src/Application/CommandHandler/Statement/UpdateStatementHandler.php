@@ -10,7 +10,6 @@ use Crowdmap\Application\CommandHandler\CommandHandler;
 use Crowdmap\Application\CommandResponse\CommandResponse;
 use Crowdmap\Domain\Exception\EntityNotFoundException;
 use Crowdmap\Domain\Exception\UnauthorizedException;
-use Crowdmap\Domain\Exception\ValidationException;
 use Crowdmap\Repository\MindmapRepository;
 use Crowdmap\Repository\StatementRepository;
 
@@ -31,12 +30,7 @@ final class UpdateStatementHandler implements CommandHandler
      */
     public function handle(Command $command): ?CommandResponse
     {
-        $content = trim($command->content);
-
-        if ($content === '') {
-            throw ValidationException::emptyContent();
-        }
-
+        // Command is self-validating, so we can trust it's valid
         $mindmap = $this->mindmapRepository->findByUuid($command->mindmapUuid);
 
         if ($mindmap === null) {
@@ -53,7 +47,7 @@ final class UpdateStatementHandler implements CommandHandler
             throw EntityNotFoundException::statementNotFound($command->statementId);
         }
 
-        $this->statementRepository->updateContent($command->statementId, $content);
+        $this->statementRepository->updateContent($command->statementId, $command->content);
 
         return null;
     }
