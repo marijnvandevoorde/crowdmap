@@ -8,7 +8,6 @@ use Crowdmap\Application\Command\Command;
 use Crowdmap\Application\Command\Mindmap\CreateMindmapCommand;
 use Crowdmap\Application\CommandHandler\CommandHandler;
 use Crowdmap\Application\CommandResponse\Mindmap\CreateMindmapResponse;
-use Crowdmap\Domain\Exception\ValidationException;
 use Crowdmap\Entity\Mindmap;
 use Crowdmap\Entity\Statement;
 use Crowdmap\Repository\MindmapRepository;
@@ -31,16 +30,11 @@ final class CreateMindmapHandler implements CommandHandler
      */
     public function handle(Command $command): CreateMindmapResponse
     {
-        $question = trim($command->question);
-
-        if ($question === '') {
-            throw ValidationException::emptyContent();
-        }
-
+        // Command is self-validating, so we can trust it's valid
         $mindmap = Mindmap::create($command->userId);
         $mindmap = $this->mindmapRepository->save($mindmap);
 
-        $rootStatement = Statement::createRoot($mindmap->id, $question);
+        $rootStatement = Statement::createRoot($mindmap->id, $command->question);
         $this->statementRepository->save($rootStatement);
 
         return new CreateMindmapResponse($mindmap);
