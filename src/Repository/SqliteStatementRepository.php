@@ -51,16 +51,6 @@ class SqliteStatementRepository implements StatementRepository
         return empty($rows) ? null : $this->hydrate($rows[0]);
     }
 
-    public function findByMindmapId(int $mindmapId): array
-    {
-        $rows = $this->connection->query(
-            'SELECT * FROM statements WHERE mindmap_id = :mindmap_id ORDER BY created_at',
-            ['mindmap_id' => $mindmapId]
-        );
-
-        return array_map([$this, 'hydrate'], $rows);
-    }
-
     public function findByParentId(int $parentId): array
     {
         $rows = $this->connection->query(
@@ -203,14 +193,6 @@ class SqliteStatementRepository implements StatementRepository
         $this->connection->execute(
             'UPDATE statements SET content = :content WHERE id = :id',
             ['id' => $id, 'content' => $content]
-        );
-    }
-
-    public function updateParentId(int $id, int $newParentId): void
-    {
-        $this->connection->execute(
-            'UPDATE statements SET parent_id = :parent_id WHERE id = :id',
-            ['id' => $id, 'parent_id' => $newParentId]
         );
     }
 

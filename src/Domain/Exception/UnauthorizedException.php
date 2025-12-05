@@ -9,11 +9,6 @@ namespace Crowdmap\Domain\Exception;
  */
 final class UnauthorizedException extends DomainException
 {
-    public static function notAuthenticated(): self
-    {
-        return new self('User is not authenticated');
-    }
-
     public static function notOwner(): self
     {
         return new self('User is not the owner of this resource');

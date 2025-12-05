@@ -38,17 +38,6 @@ class Mindmap
         );
     }
 
-    public function withFocusedStatementId(?int $focusedStatementId): self
-    {
-        return new self(
-            id: $this->id,
-            uuid: $this->uuid,
-            userId: $this->userId,
-            focusedStatementId: $focusedStatementId,
-            createdAt: $this->createdAt,
-        );
-    }
-
     private static function generateUuid(): string
     {
         return sprintf(
