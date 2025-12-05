@@ -11,7 +11,6 @@ use Crowdmap\Application\CommandResponse\Statement\MergeStatementsResponse;
 use Crowdmap\Domain\Exception\EntityNotFoundException;
 use Crowdmap\Domain\Exception\StatementsNotSiblingsException;
 use Crowdmap\Domain\Exception\UnauthorizedException;
-use Crowdmap\Domain\Exception\ValidationException;
 use Crowdmap\Entity\Statement;
 use Crowdmap\Repository\MindmapRepository;
 use Crowdmap\Repository\StatementRepository;
@@ -33,10 +32,7 @@ final class MergeStatementsHandler implements CommandHandler
      */
     public function handle(Command $command): MergeStatementsResponse
     {
-        if (count($command->statementIds) < 2) {
-            throw ValidationException::invalidInput('At least 2 statement IDs required');
-        }
-
+        // Command is self-validating, so we can trust it's valid
         $mindmap = $this->mindmapRepository->findByUuid($command->mindmapUuid);
 
         if ($mindmap === null) {
