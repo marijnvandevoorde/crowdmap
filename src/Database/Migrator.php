@@ -70,13 +70,26 @@ class Migrator
 
     private function ensureMigrationsTable(): void
     {
-        $this->connection->execute('
-            CREATE TABLE IF NOT EXISTS migrations (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                migration VARCHAR(255) NOT NULL,
-                created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-            )
-        ');
+        $driver = $this->connection->getPdo()->getAttribute(\PDO::ATTR_DRIVER_NAME);
+
+        if ($driver === 'mysql') {
+            $this->connection->execute('
+                CREATE TABLE IF NOT EXISTS migrations (
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    migration VARCHAR(255) NOT NULL,
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+                )
+            ');
+        } else {
+            // SQLite
+            $this->connection->execute('
+                CREATE TABLE IF NOT EXISTS migrations (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    migration VARCHAR(255) NOT NULL,
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+                )
+            ');
+        }
     }
 
     private function getAppliedMigrations(): array
