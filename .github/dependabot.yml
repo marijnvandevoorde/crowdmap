@@ -8,8 +8,18 @@ updates:
   - package-ecosystem: "composer" # See documentation for possible values
     directory: "/" # Location of package manifests
     schedule:
-      interval: "weekly"
+      interval: "daily"
+      time: "14:15"
+      timezone: "UTC"
+    open-pull-requests-limit: 10
+    allow:
+      - dependency-type: "all"
   - package-ecosystem: "npm" # See documentation for possible values
     directory: "/frontend" # Location of package manifests
     schedule:
-      interval: "weekly"
+      interval: "daily"
+      time: "14:15"
+      timezone: "UTC"
+    open-pull-requests-limit: 10
+    allow:
+      - dependency-type: "all"
