@@ -23,6 +23,7 @@ updates:
       angular:
         patterns:
           - "^@angular/"
+          - "^@babel/"
         update-types:
           - "minor"
           - "patch"
