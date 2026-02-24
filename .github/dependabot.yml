@@ -22,8 +22,12 @@ updates:
     groups:
       angular:
         patterns:
-          - "^@angular/"
-          - "^@babel/"
-        update-types:
-          - "minor"
-          - "patch"
+          - "@angular/*"
+          - "@angular-devkit/*"
+          - "@angular-eslint/*"
+          - "angular-eslint"
+          - "zone.js"
+      babel:
+        patterns:
+          - "@babel/*"
+          - "babel-*"
