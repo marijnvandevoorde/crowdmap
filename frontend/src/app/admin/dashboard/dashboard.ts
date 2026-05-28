@@ -2,9 +2,12 @@ import { Component, OnInit, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { DatePipe } from '@angular/common';
-import * as QRCode from 'qrcode';
+import * as QRCodeLib from 'qrcode';
 import { MindmapService, MindmapSummary } from '../../core/mindmap';
 import { AuthService } from '../../core/auth';
+
+// qrcode ships as CommonJS; normalize across bundler interop (named vs default export).
+const QRCode: typeof QRCodeLib = (QRCodeLib as unknown as { default?: typeof QRCodeLib }).default ?? QRCodeLib;
 
 @Component({
   selector: 'app-dashboard',
@@ -108,7 +111,8 @@ export class DashboardComponent implements OnInit {
         this.mfaCode = '';
         try {
           this.qrDataUrl.set(await QRCode.toDataURL(response.otpauthUri));
-        } catch {
+        } catch (e) {
+          console.error('QR code generation failed; use the manual secret instead.', e);
           this.qrDataUrl.set(null);
         }
         this.mfaLoading.set(false);
