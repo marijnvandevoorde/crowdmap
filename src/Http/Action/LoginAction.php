@@ -21,12 +21,12 @@ final class LoginAction
     {
         $data = $request->getParsedBody();
 
-        $command = new LoginCommand(
-            email: $data['email'] ?? '',
-            password: $data['password'] ?? '',
-        );
-
         try {
+            $command = new LoginCommand(
+                email: $data['email'] ?? '',
+                password: $data['password'] ?? '',
+            );
+
             $result = $this->commandBus->dispatch($command);
         } catch (ValidationException $e) {
             return $this->jsonResponse($response, ['error' => $e->getMessage()], 400);
@@ -35,6 +35,15 @@ final class LoginAction
         }
 
         session_start();
+
+        if ($result->user->mfaEnabled) {
+            unset($_SESSION['user_id']);
+            $_SESSION['mfa_pending_user_id'] = $result->user->id;
+
+            return $this->jsonResponse($response, ['mfaRequired' => true]);
+        }
+
+        unset($_SESSION['mfa_pending_user_id']);
         $_SESSION['user_id'] = $result->user->id;
 
         return $this->jsonResponse($response, [
@@ -42,6 +51,7 @@ final class LoginAction
                 'id' => $result->user->id,
                 'email' => $result->user->email,
                 'name' => $result->user->name,
+                'mfaEnabled' => $result->user->mfaEnabled,
             ],
         ]);
     }

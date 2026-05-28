@@ -76,3 +76,32 @@ button[type="submit"] {
     cursor: not-allowed;
   }
 }
+
+.alt-action {
+  margin: 1rem 0 0;
+  text-align: center;
+  font-size: 0.875rem;
+  color: #666;
+
+  a {
+    color: #007bff;
+    text-decoration: none;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+}
+
+.link-button {
+  background: none;
+  border: none;
+  color: #007bff;
+  cursor: pointer;
+  font-size: 0.875rem;
+  padding: 0;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}

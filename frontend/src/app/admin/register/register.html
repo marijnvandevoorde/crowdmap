@@ -1,0 +1,61 @@
+<div class="login-container">
+  <div class="login-box">
+    <h1>Create your account</h1>
+
+    @if (error()) {
+      <div class="error">{{ error() }}</div>
+    }
+
+    <form (ngSubmit)="onSubmit()">
+      <div class="form-group">
+        <label for="name">Name</label>
+        <input
+          type="text"
+          id="name"
+          name="name"
+          [(ngModel)]="name"
+          required
+          autocomplete="name"
+        />
+      </div>
+
+      <div class="form-group">
+        <label for="email">Email</label>
+        <input
+          type="email"
+          id="email"
+          name="email"
+          [(ngModel)]="email"
+          required
+          autocomplete="email"
+        />
+      </div>
+
+      <div class="form-group">
+        <label for="password">Password</label>
+        <input
+          type="password"
+          id="password"
+          name="password"
+          [(ngModel)]="password"
+          required
+          minlength="8"
+          autocomplete="new-password"
+        />
+        <p class="field-hint">At least 8 characters.</p>
+      </div>
+
+      <button type="submit" [disabled]="loading()">
+        @if (loading()) {
+          Creating account...
+        } @else {
+          Create account
+        }
+      </button>
+    </form>
+
+    <p class="alt-action">
+      Already have an account? <a routerLink="/admin">Log in</a>
+    </p>
+  </div>
+</div>

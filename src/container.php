@@ -2,9 +2,14 @@
 
 declare(strict_types=1);
 
+use Crowdmap\Application\Command\Auth\ConfirmMfaCommand;
+use Crowdmap\Application\Command\Auth\DisableMfaCommand;
 use Crowdmap\Application\Command\Auth\GetCurrentUserCommand;
 use Crowdmap\Application\Command\Auth\LoginCommand;
 use Crowdmap\Application\Command\Auth\LogoutCommand;
+use Crowdmap\Application\Command\Auth\RegisterCommand;
+use Crowdmap\Application\Command\Auth\SetupMfaCommand;
+use Crowdmap\Application\Command\Auth\VerifyMfaLoginCommand;
 use Crowdmap\Application\Command\Mindmap\CreateMindmapCommand;
 use Crowdmap\Application\Command\Mindmap\GetMindmapCommand;
 use Crowdmap\Application\Command\Mindmap\GetMindmapForModerationCommand;
@@ -17,9 +22,14 @@ use Crowdmap\Application\Command\Statement\UpdateStatementCommand;
 use Crowdmap\Application\Command\Vote\SetVoteCommand;
 use Crowdmap\Application\CommandBus\CommandBus;
 use Crowdmap\Application\CommandBus\SimpleCommandBus;
+use Crowdmap\Application\CommandHandler\Auth\ConfirmMfaHandler;
+use Crowdmap\Application\CommandHandler\Auth\DisableMfaHandler;
 use Crowdmap\Application\CommandHandler\Auth\GetCurrentUserHandler;
 use Crowdmap\Application\CommandHandler\Auth\LoginHandler;
 use Crowdmap\Application\CommandHandler\Auth\LogoutHandler;
+use Crowdmap\Application\CommandHandler\Auth\RegisterHandler;
+use Crowdmap\Application\CommandHandler\Auth\SetupMfaHandler;
+use Crowdmap\Application\CommandHandler\Auth\VerifyMfaLoginHandler;
 use Crowdmap\Application\CommandHandler\Mindmap\CreateMindmapHandler;
 use Crowdmap\Application\CommandHandler\Mindmap\GetMindmapForModerationHandler;
 use Crowdmap\Application\CommandHandler\Mindmap\GetMindmapHandler;
@@ -33,6 +43,7 @@ use Crowdmap\Application\CommandHandler\Vote\SetVoteHandler;
 use Crowdmap\Database\DatabaseConnection;
 use Crowdmap\Database\MysqlConnection;
 use Crowdmap\Database\SqliteConnection;
+use Crowdmap\Domain\Service\TotpService;
 use Crowdmap\Repository\MindmapRepository;
 use Crowdmap\Repository\MysqlMindmapRepository;
 use Crowdmap\Repository\MysqlStatementRepository;
@@ -68,6 +79,9 @@ return [
         }
         return new SqliteConnection($dbPath);
     },
+
+    // Domain services
+    TotpService::class => fn() => new TotpService(),
 
     // Repositories
     UserRepository::class => function ($c) {
@@ -136,6 +150,24 @@ return [
     LoginHandler::class => fn($c) => new LoginHandler(
         $c->get(UserRepository::class),
     ),
+    RegisterHandler::class => fn($c) => new RegisterHandler(
+        $c->get(UserRepository::class),
+    ),
+    SetupMfaHandler::class => fn($c) => new SetupMfaHandler(
+        $c->get(UserRepository::class),
+        $c->get(TotpService::class),
+    ),
+    ConfirmMfaHandler::class => fn($c) => new ConfirmMfaHandler(
+        $c->get(UserRepository::class),
+        $c->get(TotpService::class),
+    ),
+    DisableMfaHandler::class => fn($c) => new DisableMfaHandler(
+        $c->get(UserRepository::class),
+    ),
+    VerifyMfaLoginHandler::class => fn($c) => new VerifyMfaLoginHandler(
+        $c->get(UserRepository::class),
+        $c->get(TotpService::class),
+    ),
     LogoutHandler::class => fn() => new LogoutHandler(),
     GetCurrentUserHandler::class => fn($c) => new GetCurrentUserHandler(
         $c->get(UserRepository::class),
@@ -160,6 +192,11 @@ return [
         $bus->register(GetMindmapForModerationCommand::class, GetMindmapForModerationHandler::class);
         $bus->register(ListMindmapsCommand::class, ListMindmapsHandler::class);
         $bus->register(LoginCommand::class, LoginHandler::class);
+        $bus->register(RegisterCommand::class, RegisterHandler::class);
+        $bus->register(SetupMfaCommand::class, SetupMfaHandler::class);
+        $bus->register(ConfirmMfaCommand::class, ConfirmMfaHandler::class);
+        $bus->register(DisableMfaCommand::class, DisableMfaHandler::class);
+        $bus->register(VerifyMfaLoginCommand::class, VerifyMfaLoginHandler::class);
         $bus->register(LogoutCommand::class, LogoutHandler::class);
         $bus->register(GetCurrentUserCommand::class, GetCurrentUserHandler::class);
         $bus->register(SetVoteCommand::class, SetVoteHandler::class);

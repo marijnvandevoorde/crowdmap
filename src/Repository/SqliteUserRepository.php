@@ -54,12 +54,15 @@ class SqliteUserRepository implements UserRepository
     private function insert(User $user): User
     {
         $this->connection->execute(
-            'INSERT INTO users (email, name, password_hash, created_at) VALUES (:email, :name, :password_hash, :created_at)',
+            'INSERT INTO users (email, name, password_hash, created_at, mfa_enabled, totp_secret, mfa_recovery_codes) VALUES (:email, :name, :password_hash, :created_at, :mfa_enabled, :totp_secret, :mfa_recovery_codes)',
             [
                 'email' => $user->email,
                 'name' => $user->name,
                 'password_hash' => $user->passwordHash,
                 'created_at' => $user->createdAt->format('Y-m-d H:i:s'),
+                'mfa_enabled' => $user->mfaEnabled ? 1 : 0,
+                'totp_secret' => $user->totpSecret,
+                'mfa_recovery_codes' => $user->recoveryCodes !== null ? json_encode($user->recoveryCodes) : null,
             ]
         );
 
@@ -71,13 +74,16 @@ class SqliteUserRepository implements UserRepository
         $now = new DateTimeImmutable();
 
         $this->connection->execute(
-            'UPDATE users SET email = :email, name = :name, password_hash = :password_hash, updated_at = :updated_at WHERE id = :id',
+            'UPDATE users SET email = :email, name = :name, password_hash = :password_hash, updated_at = :updated_at, mfa_enabled = :mfa_enabled, totp_secret = :totp_secret, mfa_recovery_codes = :mfa_recovery_codes WHERE id = :id',
             [
                 'id' => $user->id,
                 'email' => $user->email,
                 'name' => $user->name,
                 'password_hash' => $user->passwordHash,
                 'updated_at' => $now->format('Y-m-d H:i:s'),
+                'mfa_enabled' => $user->mfaEnabled ? 1 : 0,
+                'totp_secret' => $user->totpSecret,
+                'mfa_recovery_codes' => $user->recoveryCodes !== null ? json_encode($user->recoveryCodes) : null,
             ]
         );
 
@@ -88,6 +94,9 @@ class SqliteUserRepository implements UserRepository
             passwordHash: $user->passwordHash,
             createdAt: $user->createdAt,
             updatedAt: $now,
+            mfaEnabled: $user->mfaEnabled,
+            totpSecret: $user->totpSecret,
+            recoveryCodes: $user->recoveryCodes,
         );
     }
 
@@ -100,6 +109,11 @@ class SqliteUserRepository implements UserRepository
             passwordHash: $row['password_hash'],
             createdAt: new DateTimeImmutable($row['created_at']),
             updatedAt: $row['updated_at'] ? new DateTimeImmutable($row['updated_at']) : null,
+            mfaEnabled: (bool) ($row['mfa_enabled'] ?? false),
+            totpSecret: $row['totp_secret'] ?? null,
+            recoveryCodes: isset($row['mfa_recovery_codes']) && $row['mfa_recovery_codes'] !== null
+                ? json_decode($row['mfa_recovery_codes'], true)
+                : null,
         );
     }
 }
