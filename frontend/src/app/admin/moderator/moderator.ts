@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, signal, computed, effect, ViewChild, ElementRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, signal, computed, effect, ViewChild, ElementRef, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MindmapService, Statement, Mindmap } from '../../core/mindmap';
 import { AuthService } from '../../core/auth';
@@ -8,6 +8,7 @@ import { MindmapGraphComponent } from './mindmap-graph/mindmap-graph';
   selector: 'app-moderator',
   imports: [MindmapGraphComponent],
   templateUrl: './moderator.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './moderator.scss',
 })
 export class ModeratorComponent implements OnInit, OnDestroy {
