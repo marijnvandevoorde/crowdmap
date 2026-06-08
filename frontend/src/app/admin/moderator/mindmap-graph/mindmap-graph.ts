@@ -9,6 +9,7 @@ import {
   AfterViewInit,
   OnDestroy,
   ViewChild,
+  ChangeDetectionStrategy
 } from '@angular/core';
 import * as d3 from 'd3';
 import { Statement } from '../../../core/mindmap';
@@ -32,6 +33,7 @@ interface D3Node extends d3.HierarchyPointNode<TreeNode> {
   selector: 'app-mindmap-graph',
   standalone: true,
   template: `<div #container class="mindmap-container"></div>`,
+  changeDetection: ChangeDetectionStrategy.Eager,
   styles: [`
     .mindmap-container {
       width: 100%;

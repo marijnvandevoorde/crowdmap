@@ -1,4 +1,4 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, OnInit, signal, ChangeDetectionStrategy } from '@angular/core';
 import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { DatePipe } from '@angular/common';
@@ -13,6 +13,7 @@ const QRCode: typeof QRCodeLib = (QRCodeLib as unknown as { default?: typeof QRC
   selector: 'app-dashboard',
   imports: [FormsModule, DatePipe],
   templateUrl: './dashboard.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './dashboard.scss',
 })
 export class DashboardComponent implements OnInit {

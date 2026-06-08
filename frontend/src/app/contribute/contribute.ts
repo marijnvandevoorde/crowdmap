@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, AfterViewInit, signal, computed, ViewChild, ElementRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, AfterViewInit, signal, computed, ViewChild, ElementRef, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { MindmapService, Statement, Mindmap } from '../core/mindmap';
@@ -12,6 +12,7 @@ interface SuggestionMatch {
   selector: 'app-contribute',
   imports: [FormsModule],
   templateUrl: './contribute.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './contribute.scss',
 })
 export class ContributeComponent implements OnInit, OnDestroy, AfterViewInit {
