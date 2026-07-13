@@ -17,6 +17,14 @@ updates:
       time: "14:15"
       timezone: "UTC"
     open-pull-requests-limit: 10
+    ignore:
+      # TypeScript 7 is the native Go port: it removed the JS compiler API
+      # (require('typescript') now exposes only { version, versionMajorMinor }).
+      # Angular's compiler-cli and typescript-eslint both cap their peer range
+      # at typescript <6.1, and ts-node breaks at runtime. A 6 -> 7 bump cannot
+      # be adopted until the toolchain ships TS 7 support. Revisit then.
+      - dependency-name: "typescript"
+        update-types: ["version-update:semver-major"]
     allow:
       - dependency-type: "all"
     groups:
