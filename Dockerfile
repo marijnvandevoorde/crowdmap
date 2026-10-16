@@ -15,6 +15,8 @@ RUN composer install --no-dev --optimize-autoloader
 
 # Code is baked in; the only state is the database (MySQL in production).
 COPY . .
+# php-fpm runs as www-data; checkouts with private file modes would leave it unable to read the code
+RUN chmod -R a+rX /app
 
 # Create entrypoint script that runs migrations then starts php-fpm
 RUN echo '#!/bin/sh\nphp bin/migrate up\nexec php-fpm' > /entrypoint.sh && chmod +x /entrypoint.sh
