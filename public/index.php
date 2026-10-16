@@ -19,7 +19,7 @@ AppFactory::setContainer($container);
 $app = AppFactory::create();
 
 $app->addBodyParsingMiddleware();
-$app->addErrorMiddleware(true, true, true);
+Crowdmap\Http\ErrorHandling::register($app, Crowdmap\Http\ErrorHandling::debugFromEnvironment());
 
 (require __DIR__ . '/../src/routes.php')($app);
 
