@@ -5,8 +5,9 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/../vendor/autoload.php';
 
-use Crowdmap\Database\SqliteConnection;
+use Crowdmap\Database\ConnectionFactory;
 use Crowdmap\Entity\User;
+use Crowdmap\Repository\MysqlUserRepository;
 use Crowdmap\Repository\SqliteUserRepository;
 
 if ($argc < 4) {
@@ -18,8 +19,10 @@ $email = $argv[1];
 $name = $argv[2];
 $password = $argv[3];
 
-$connection = new SqliteConnection(__DIR__ . '/../database/crowdmap.sqlite');
-$userRepo = new SqliteUserRepository($connection);
+$connection = ConnectionFactory::fromEnvironment();
+$userRepo = ConnectionFactory::driver() === 'mysql'
+    ? new MysqlUserRepository($connection)
+    : new SqliteUserRepository($connection);
 
 $existing = $userRepo->findByEmail($email);
 if ($existing !== null) {

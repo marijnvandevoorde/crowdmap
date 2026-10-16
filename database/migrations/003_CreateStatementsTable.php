@@ -16,7 +16,9 @@ return new class implements Migration {
                     id INT AUTO_INCREMENT PRIMARY KEY,
                     mindmap_id INT NOT NULL,
                     parent_id INT NULL,
-                    content TEXT NOT NULL,
+                    -- binary collation: duplicate detection and the unique index
+                    -- compare content exactly, as SQLite does
+                    content TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
                     session_id VARCHAR(64) NULL,
                     created_at DATETIME NOT NULL,
                     FOREIGN KEY (mindmap_id) REFERENCES mindmaps(id) ON DELETE CASCADE,

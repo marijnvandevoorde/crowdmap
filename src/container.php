@@ -40,9 +40,8 @@ use Crowdmap\Application\CommandHandler\Statement\DeleteStatementsHandler;
 use Crowdmap\Application\CommandHandler\Statement\MergeStatementsHandler;
 use Crowdmap\Application\CommandHandler\Statement\UpdateStatementHandler;
 use Crowdmap\Application\CommandHandler\Vote\SetVoteHandler;
+use Crowdmap\Database\ConnectionFactory;
 use Crowdmap\Database\DatabaseConnection;
-use Crowdmap\Database\MysqlConnection;
-use Crowdmap\Database\SqliteConnection;
 use Crowdmap\Domain\Service\TotpService;
 use Crowdmap\Repository\MindmapRepository;
 use Crowdmap\Repository\MysqlMindmapRepository;
@@ -59,52 +58,29 @@ use Crowdmap\Repository\VoteRepository;
 
 return [
     // Infrastructure - Database
-    DatabaseConnection::class => function () {
-        $dbType = getenv('DB_TYPE') ?: 'sqlite';
-
-        if ($dbType === 'mysql') {
-            return new MysqlConnection(
-                host: getenv('DB_HOST') ?: 'localhost',
-                database: getenv('DB_NAME') ?: 'crowdmap',
-                username: getenv('DB_USER') ?: 'root',
-                password: getenv('DB_PASSWORD') ?: '',
-                port: (int) (getenv('DB_PORT') ?: 3306)
-            );
-        }
-
-        // Default to SQLite
-        $dbPath = getenv('DB_PATH') ?: 'database/crowdmap.sqlite';
-        if ($dbPath[0] !== '/') {
-            $dbPath = __DIR__ . '/../' . $dbPath;
-        }
-        return new SqliteConnection($dbPath);
-    },
+    DatabaseConnection::class => fn() => ConnectionFactory::fromEnvironment(),
 
     // Domain services
     TotpService::class => fn() => new TotpService(),
 
     // Repositories
     UserRepository::class => function ($c) {
-        $dbType = getenv('DB_TYPE') ?: 'sqlite';
-        return $dbType === 'mysql'
+        return ConnectionFactory::driver() === 'mysql'
             ? new MysqlUserRepository($c->get(DatabaseConnection::class))
             : new SqliteUserRepository($c->get(DatabaseConnection::class));
     },
     MindmapRepository::class => function ($c) {
-        $dbType = getenv('DB_TYPE') ?: 'sqlite';
-        return $dbType === 'mysql'
+        return ConnectionFactory::driver() === 'mysql'
             ? new MysqlMindmapRepository($c->get(DatabaseConnection::class))
             : new SqliteMindmapRepository($c->get(DatabaseConnection::class));
     },
     StatementRepository::class => function ($c) {
-        $dbType = getenv('DB_TYPE') ?: 'sqlite';
-        return $dbType === 'mysql'
+        return ConnectionFactory::driver() === 'mysql'
             ? new MysqlStatementRepository($c->get(DatabaseConnection::class))
             : new SqliteStatementRepository($c->get(DatabaseConnection::class));
     },
     VoteRepository::class => function ($c) {
-        $dbType = getenv('DB_TYPE') ?: 'sqlite';
-        return $dbType === 'mysql'
+        return ConnectionFactory::driver() === 'mysql'
             ? new MysqlVoteRepository($c->get(DatabaseConnection::class))
             : new SqliteVoteRepository($c->get(DatabaseConnection::class));
     },

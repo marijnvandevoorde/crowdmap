@@ -16,7 +16,7 @@ A collaborative mindmapping application built with PHP and Angular.
 ## Requirements
 
 - PHP 8.1 or higher
-- SQLite
+- SQLite (local development) or MySQL (production: MySQL HeatWave)
 - Composer
 - Node.js and npm (for frontend)
 
@@ -37,11 +37,22 @@ npm install
 npm start
 ```
 
+### Database
+
+SQLite is the default. Setting `MYSQL_HOST` (with `MYSQL_PORT`, `MYSQL_DATABASE`,
+`MYSQL_USER`, `MYSQL_PASSWORD`) switches to MySQL, over TLS unless
+`MYSQL_SSL_MODE=DISABLED`; see `.env.example`. `php bin/migrate` creates the schema on
+either. `php bin/import-sqlite <file>` copies a SQLite database into an empty MySQL one,
+keeping ids.
+
 ## Running Tests
 
 ```bash
 vendor/bin/phpunit
 ```
+
+The integration tests run against MySQL with `TEST_DB=mysql` and the `MYSQL_*`
+variables set; they drop every table in that database first.
 
 ## Architecture
 

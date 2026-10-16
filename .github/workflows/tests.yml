@@ -8,6 +8,18 @@ jobs:
   test:
     runs-on: ubuntu-latest
 
+    services:
+      mysql:
+        image: mysql:9
+        env:
+          MYSQL_ROOT_PASSWORD: test
+          MYSQL_DATABASE: crowdmap
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -ptest"
+          --health-interval=5s --health-timeout=5s --health-retries=20
+
     strategy:
       matrix:
         php-version: ['8.4']
@@ -19,7 +31,7 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php-version }}
-          extensions: pdo, pdo_sqlite, sqlite3
+          extensions: pdo, pdo_mysql, pdo_sqlite, sqlite3
           coverage: xdebug
 
       - name: Validate composer.json and composer.lock
@@ -38,6 +50,16 @@ jobs:
 
       - name: Run test suite
         run: vendor/bin/phpunit tests
+
+      - name: Run integration tests against MySQL
+        env:
+          TEST_DB: mysql
+          MYSQL_HOST: 127.0.0.1
+          MYSQL_PORT: 3306
+          MYSQL_DATABASE: crowdmap
+          MYSQL_USER: root
+          MYSQL_PASSWORD: test
+        run: vendor/bin/phpunit tests/Integration
 
       - name: Generate coverage report
         if: matrix.php-version == '8.4'

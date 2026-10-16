@@ -7,21 +7,25 @@ namespace Crowdmap\Tests\Integration\Repository;
 use Crowdmap\Entity\Mindmap;
 use Crowdmap\Entity\Statement;
 use Crowdmap\Entity\Vote;
+use Crowdmap\Repository\MysqlStatementRepository;
 use Crowdmap\Repository\SqliteStatementRepository;
+use Crowdmap\Repository\StatementRepository;
 use Crowdmap\Tests\Integration\DatabaseTestCase;
 use DateTimeImmutable;
 use PDOException;
 
 class StatementRepositoryTest extends DatabaseTestCase
 {
-    private SqliteStatementRepository $repository;
+    private StatementRepository $repository;
     private int $mindmapId;
 
     protected function setUp(): void
     {
         parent::setUp();
 
-        $this->repository = new SqliteStatementRepository($this->connection);
+        $this->repository = self::usesMysql()
+            ? new MysqlStatementRepository($this->connection)
+            : new SqliteStatementRepository($this->connection);
 
         // Create a test mindmap
         $this->connection->execute(
@@ -415,5 +419,16 @@ class StatementRepositoryTest extends DatabaseTestCase
         $grandchild2 = $this->repository->save(Statement::createReaction($this->mindmapId, $child2->id, 'Same content', 's4'));
 
         $this->assertNotSame($grandchild1->id, $grandchild2->id);
+    }
+
+    public function testContentComparisonIsExact(): void
+    {
+        $root = $this->repository->save(Statement::createRoot($this->mindmapId, 'Root'));
+        $this->repository->save(Statement::createReaction($this->mindmapId, $root->id, 'cafe', 's1'));
+
+        $this->assertNull($this->repository->findByParentIdAndContent($root->id, 'Café'));
+
+        $saved = $this->repository->save(Statement::createReaction($this->mindmapId, $root->id, 'Café', 's2'));
+        $this->assertSame('Café', $this->repository->findById($saved->id)->content);
     }
 }

@@ -5,13 +5,12 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/../vendor/autoload.php';
 
+use Crowdmap\Database\ConnectionFactory;
 use Crowdmap\Database\Migrator;
-use Crowdmap\Database\SqliteConnection;
 
-$databasePath = __DIR__ . '/../database/crowdmap.sqlite';
 $migrationsPath = __DIR__ . '/../database/migrations';
 
-$connection = new SqliteConnection($databasePath);
+$connection = ConnectionFactory::fromEnvironment();
 $migrator = new Migrator($connection, $migrationsPath);
 
 $command = $argv[1] ?? 'up';

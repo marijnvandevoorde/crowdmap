@@ -1,0 +1,95 @@
+#!/usr/bin/env php
+<?php
+
+declare(strict_types=1);
+
+/**
+ * One-off copy of a SQLite crowdmap database into the configured MySQL database.
+ *
+ * Runs the migrations on the target first, refuses to touch a target that already
+ * holds data, keeps every id, and checks the row counts afterwards.
+ *
+ * Usage: import-sqlite <path/to/crowdmap.sqlite>
+ */
+
+require_once __DIR__ . '/../vendor/autoload.php';
+
+use Crowdmap\Database\ConnectionFactory;
+use Crowdmap\Database\Migrator;
+use Crowdmap\Database\SqliteConnection;
+
+$sourcePath = $argv[1] ?? null;
+if ($sourcePath === null || !is_readable($sourcePath)) {
+    fwrite(STDERR, "Usage: import-sqlite <path/to/crowdmap.sqlite>\n");
+    exit(1);
+}
+
+if (ConnectionFactory::driver() !== 'mysql') {
+    fwrite(STDERR, "The target must be MySQL (set MYSQL_HOST or DB_TYPE=mysql).\n");
+    exit(1);
+}
+
+$source = new SqliteConnection($sourcePath);
+$target = ConnectionFactory::fromEnvironment();
+$pdo = $target->getPdo();
+
+(new Migrator($target, __DIR__ . '/../database/migrations'))->migrate();
+
+// Parents before children, so the copy also works with foreign keys on.
+$tables = ['users', 'mindmaps', 'statements', 'votes'];
+
+foreach ($tables as $table) {
+    $count = (int) $target->query("SELECT COUNT(*) AS n FROM {$table}")[0]['n'];
+    if ($count > 0) {
+        fwrite(STDERR, "Target table {$table} already holds {$count} rows; refusing to import.\n");
+        exit(1);
+    }
+}
+
+$pdo->exec('SET FOREIGN_KEY_CHECKS = 0');
+$pdo->beginTransaction();
+
+try {
+    foreach ($tables as $table) {
+        $targetColumns = array_column($target->query("SHOW COLUMNS FROM {$table}"), 'Field');
+        $rows = $source->query("SELECT * FROM {$table} ORDER BY id");
+
+        foreach ($rows as $row) {
+            $row = array_intersect_key($row, array_flip($targetColumns));
+            $columns = array_keys($row);
+            $sql = sprintf(
+                'INSERT INTO %s (%s) VALUES (%s)',
+                $table,
+                implode(', ', $columns),
+                implode(', ', array_map(fn($c) => ':' . $c, $columns)),
+            );
+            $target->execute($sql, $row);
+        }
+
+        echo sprintf("%-10s %d rows\n", $table, count($rows));
+    }
+
+    $pdo->commit();
+} catch (\Throwable $e) {
+    $pdo->rollBack();
+    fwrite(STDERR, 'Import failed, nothing was written: ' . $e->getMessage() . "\n");
+    exit(1);
+} finally {
+    $pdo->exec('SET FOREIGN_KEY_CHECKS = 1');
+}
+
+$failed = false;
+foreach ($tables as $table) {
+    $expected = (int) $source->query("SELECT COUNT(*) AS n FROM {$table}")[0]['n'];
+    $actual = (int) $target->query("SELECT COUNT(*) AS n FROM {$table}")[0]['n'];
+    if ($expected !== $actual) {
+        fwrite(STDERR, "Count mismatch for {$table}: source {$expected}, target {$actual}\n");
+        $failed = true;
+    }
+}
+
+if ($failed) {
+    exit(1);
+}
+
+echo "Import complete; row counts match.\n";
