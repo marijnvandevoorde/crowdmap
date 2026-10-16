@@ -54,6 +54,13 @@ vendor/bin/phpunit
 The integration tests run against MySQL with `TEST_DB=mysql` and the `MYSQL_*`
 variables set; they drop every table in that database first.
 
+## Deploying
+
+Production (crowdmap.small-victories.co) runs on the Kubernetes cluster `sv-oke`, currently
+switched off (0 replicas). `scripts/deploy.sh` ships `origin/main` there with the shared
+`sv-deploy` script from the Oracle repo (config in `deploy.env`); `scripts/deploy.sh --check`
+shows what runs. `SV_DEPLOY` overrides the script's path (default `../Oracle/deploy/sv-deploy`).
+
 ## Architecture
 
 This project follows Clean Architecture principles:
