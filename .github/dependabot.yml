@@ -34,6 +34,22 @@ updates:
     allow:
       - dependency-type: "all"
     groups:
+      # Framework groups come first so they take precedence over the catch-all.
+      # They cover every update type, so an Angular major arrives as one PR
+      # (its packages can't build when bumped separately). A grouped PR with a
+      # major is reported as semver-major, so it is never auto-merged.
+      angular:
+        patterns:
+          - "@angular/*"
+          - "@angular-devkit/*"
+          - "@angular-eslint/*"
+          - "angular-eslint"
+          - "@schematics/angular"
+          - "zone.js"
+      babel:
+        patterns:
+          - "@babel/*"
+          - "babel-*"
       npm-minor-patch:
         patterns:
           - "*"
