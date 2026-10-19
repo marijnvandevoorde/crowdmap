@@ -34,7 +34,7 @@ class ConfirmMfaHandlerTest extends TestCase
             ->withId(1)
             ->withTotpSecret($secret);
 
-        $this->userRepository->method('findById')->with(1)->willReturn($user);
+        $this->userRepository->expects($this->once())->method('findById')->with(1)->willReturn($user);
 
         $saved = null;
         $this->userRepository
@@ -63,7 +63,7 @@ class ConfirmMfaHandlerTest extends TestCase
             ->withId(1)
             ->withTotpSecret($secret);
 
-        $this->userRepository->method('findById')->with(1)->willReturn($user);
+        $this->userRepository->expects($this->once())->method('findById')->with(1)->willReturn($user);
         $this->userRepository->expects($this->never())->method('save');
 
         // Pick a code guaranteed to differ from the current valid one.

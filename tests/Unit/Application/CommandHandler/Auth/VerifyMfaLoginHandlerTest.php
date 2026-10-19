@@ -44,7 +44,7 @@ class VerifyMfaLoginHandlerTest extends TestCase
 
     public function testAcceptsValidTotpCode(): void
     {
-        $this->userRepository->method('findById')->with(1)->willReturn($this->enrolledUser());
+        $this->userRepository->expects($this->once())->method('findById')->with(1)->willReturn($this->enrolledUser());
         $this->userRepository->expects($this->never())->method('save');
 
         $code = TOTP::createFromSecret($this->secret)->now();
@@ -56,7 +56,7 @@ class VerifyMfaLoginHandlerTest extends TestCase
     public function testAcceptsRecoveryCodeAndConsumesIt(): void
     {
         $user = $this->enrolledUser(['abcde-fghij', 'klmno-pqrst']);
-        $this->userRepository->method('findById')->with(1)->willReturn($user);
+        $this->userRepository->expects($this->once())->method('findById')->with(1)->willReturn($user);
 
         $saved = null;
         $this->userRepository
@@ -77,7 +77,7 @@ class VerifyMfaLoginHandlerTest extends TestCase
 
     public function testRejectsInvalidCode(): void
     {
-        $this->userRepository->method('findById')->with(1)->willReturn($this->enrolledUser(['abcde-fghij']));
+        $this->userRepository->expects($this->once())->method('findById')->with(1)->willReturn($this->enrolledUser(['abcde-fghij']));
         $this->userRepository->expects($this->never())->method('save');
 
         $this->expectException(InvalidMfaCodeException::class);
