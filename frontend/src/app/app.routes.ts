@@ -25,6 +25,10 @@ export const routes: Routes = [
     loadComponent: () => import('./contribute/contribute').then(m => m.ContributeComponent),
   },
   {
+    path: 'privacy',
+    loadComponent: () => import('./privacy/privacy').then(m => m.PrivacyComponent),
+  },
+  {
     path: '',
     redirectTo: 'admin',
     pathMatch: 'full',
