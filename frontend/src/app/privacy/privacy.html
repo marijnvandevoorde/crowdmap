@@ -5,15 +5,44 @@
 
     <p>Crowdmap is a small tool by Small Victories for collecting reactions from a group as a mindmap. This page says what it keeps about you, and why.</p>
 
+    <h2>Who runs Crowdmap</h2>
+    <p>Small Victories (Marijn Vandevoorde), Mellestraat 303, 9090 Merelbeke-Melle, Belgium · enterprise number BE0793.301.929 · <a href="mailto:hello@small-victories.co">hello&#64;small-victories.co</a>. Small Victories is responsible (the controller) for the data described here.</p>
+
     <h2>If you have an account (moderators)</h2>
     <ul>
-      <li><strong>Your account:</strong> your name, your email address and your password (stored only as a hash), and, if you turn on two-factor sign-in, its secret and recovery codes.</li>
+      <li><strong>Your account:</strong> your name, your email address and your password (stored only as a hash), and, if you turn on two-factor sign-in, its secret and recovery codes (the codes stored only as hashes).</li>
       <li><strong>Your mindmaps:</strong> the questions you create and the moderation you do on them, such as merging or deleting reactions.</li>
       <li><strong>The QR code</strong> on a mindmap's page is drawn by goqr.me (api.qrserver.com), which receives the mindmap's contribution link and your IP address.</li>
     </ul>
 
     <h2>If you contribute to a mindmap</h2>
     <p>You don't need an account. The reactions you write and your votes are stored with the mindmap, and the moderator and other contributors can see them. To recognise your own reactions and count one vote per person, your browser keeps a random ID (<code>crowdmap_session_id</code>) that is stored with your reactions and votes. It says nothing about who you are, so don't write anything in a reaction you wouldn't want the group to see.</p>
+
+    <h2>Why</h2>
+    <ul>
+      <li><strong>Accounts, mindmaps, reactions and votes:</strong> to provide the service you use (GDPR art. 6(1)(b)).</li>
+      <li><strong>Backups and protection against abuse:</strong> our legitimate interest in a safe, reliable service (art. 6(1)(f)).</li>
+      <li><strong>Analytics:</strong> only with your consent (art. 6(1)(a)), which you can withdraw at any time.</li>
+    </ul>
+    <p>Crowdmap doesn't sell data, show ads or send marketing email.</p>
+
+    <h2>Who else receives it</h2>
+    <ul>
+      <li><strong>Oracle Cloud Infrastructure:</strong> the servers and the database, in Amsterdam (EU).</li>
+      <li><strong>Hetzner Online</strong> (Germany): an encrypted copy of the nightly backup, stored in the EU.</li>
+      <li><strong>Cloudflare:</strong> DNS, the secure connection to the site and protection against attacks. It sees your IP address and the pages you request.</li>
+      <li><strong>goqr.me:</strong> the QR code, for moderators only (see above).</li>
+      <li><strong>Google:</strong> analytics, only if you accept (see below).</li>
+    </ul>
+    <p>Cloudflare and Google may process data outside the EU; those transfers are covered by the EU-U.S. Data Privacy Framework or the European Commission's standard contractual clauses.</p>
+
+    <h2>How long it is kept</h2>
+    <ul>
+      <li><strong>Your account and mindmaps</strong> stay until you ask us to delete them. There is no delete button, so mail us.</li>
+      <li><strong>Reactions:</strong> when a moderator deletes a reaction, it and its votes are deleted at once. When reactions are merged, their votes move to the one that stays and the others are deleted.</li>
+      <li><strong>Backups:</strong> the database is backed up every night and each backup is kept for 30 days, so deleted data is gone from the backups within 30 days.</li>
+      <li><strong>Your browser:</strong> the contributor ID and your cookie choice stay until you clear your browser's storage.</li>
+    </ul>
 
     <h2>Cookies and your browser</h2>
     <ul>
@@ -31,7 +60,7 @@
     </ul>
 
     <h2>Your rights</h2>
-    <p>Want a copy of your data, or your account and mindmaps deleted? Questions about any of this, or about your rights under the GDPR? Mail <a href="mailto:hello@small-victories.co">hello&#64;small-victories.co</a>.</p>
+    <p>You can ask for a copy of your data, have it corrected or deleted, object to or restrict its use, and withdraw consent at any time. Mail <a href="mailto:hello@small-victories.co">hello&#64;small-victories.co</a>; we answer within one month. You can also complain to the Belgian Data Protection Authority (<a href="https://www.dataprotectionauthority.be" target="_blank" rel="noopener">dataprotectionauthority.be</a>) or the authority where you live.</p>
 
     <p><a routerLink="/admin">Back to Crowdmap</a></p>
   </article>
