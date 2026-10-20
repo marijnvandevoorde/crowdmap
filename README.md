@@ -1,6 +1,19 @@
 # Crowdmap
 
-A collaborative mindmapping application built with PHP and Angular.
+A collaborative mindmapping application built with PHP and Angular: a group builds a mindmap
+of statements together and votes on them.
+
+Crowdmap is open source and self-hostable: it runs on PHP with SQLite out of the box, so a
+single small server is enough.
+
+## Run it yourself
+
+```bash
+cp .env.example .env
+docker compose up --build
+```
+
+The PHP container creates the schema on start. Then open http://localhost:8080. Without Docker, follow Installation below.
 
 ![Tests](https://github.com/marijnvandevoorde/crowdmap/actions/workflows/tests.yml/badge.svg)
 [![codecov](https://codecov.io/gh/marijnvandevoorde/crowdmap/branch/main/graph/badge.svg)](https://codecov.io/gh/marijnvandevoorde/crowdmap)
@@ -79,4 +92,4 @@ This project follows Clean Architecture principles:
 
 ## License
 
-Private project
+MIT, see [LICENSE](LICENSE).
