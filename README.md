@@ -45,6 +45,13 @@ SQLite is the default. Setting `MYSQL_HOST` (with `MYSQL_PORT`, `MYSQL_DATABASE`
 either. `php bin/import-sqlite <file>` copies a SQLite database into an empty MySQL one,
 keeping ids.
 
+### Analytics and consent
+
+`frontend/public/consent.js`, loaded first in `index.html`, sets Google Consent Mode v2
+defaults to denied, loads Google Tag Manager (`GTM_ID` at the top of that file; empty means
+nothing loads) and shows a cookie banner. Accept grants `analytics_storage` only; the GA4 tag
+is configured in the GTM container. The privacy page is the `/privacy` route.
+
 ## Running Tests
 
 ```bash
