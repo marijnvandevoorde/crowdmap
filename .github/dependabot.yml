@@ -85,6 +85,15 @@ updates:
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 10
+    # Skip PHP pre-releases (alpha/beta/RC); GA and patch releases still come through.
+    # Dependabot lowercases docker tags and compares them as Ruby versions, so
+    # 8.6.0RC3 becomes 8.6.0.rc3, which falls in [8.6.0.a, 8.6.0). Add a line per next minor.
+    ignore:
+      - dependency-name: "php"
+        versions:
+          - ">= 8.6.0.a, < 8.6.0"
+          - ">= 8.7.0.a, < 8.7.0"
+          - ">= 9.0.0.a, < 9.0.0"
     groups:
       docker-minor-patch:
         patterns:
