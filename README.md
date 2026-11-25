@@ -58,12 +58,11 @@ SQLite is the default. Setting `MYSQL_HOST` (with `MYSQL_PORT`, `MYSQL_DATABASE`
 either. `php bin/import-sqlite <file>` copies a SQLite database into an empty MySQL one,
 keeping ids.
 
-### Analytics and consent
+### Analytics
 
-`frontend/public/consent.js`, loaded first in `index.html`, sets Google Consent Mode v2
-defaults to denied, loads Google Tag Manager (`GTM_ID` at the top of that file; empty means
-nothing loads) and shows a cookie banner. Accept grants `analytics_storage` only; the GA4 tag
-is configured in the GTM container. The privacy page is the `/privacy` route.
+Visits are counted with Cloudflare Web Analytics (cookieless, no banner needed). The
+small-victories.co zone injects the beacon, so the app has no analytics code. The privacy
+page is the `/privacy` route.
 
 ## Running Tests
 
